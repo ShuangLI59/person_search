@@ -16,7 +16,7 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
   ```
 
   You can download my [Makefile.config](http://www.cs.berkeley.edu/~rbg/fast-rcnn-data/Makefile.config) for reference.
-2. Python packages you might not have: `cython`, `python-opencv`, `easydict`
+2. Python packages you might not have: `cython`, `python-opencv`, `easydict (>=1.6)`
 3. MATLAB is required for processing the raw data.
 
 ## Installation
