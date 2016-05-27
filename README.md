@@ -56,7 +56,7 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
 
 4. Training and evaluation
     ```Shell
-    experiments/scripts/train.sh
+    experiments/scripts/train.sh 0
     ```
     Or you may directly download a **trained model** from [here](https://drive.google.com/file/d/0B67_d0rLRTQYeDlXMlc2OGUzeG8/view?usp=sharing) to `output/psdb_train/`, and test the performance with
     ```Shell
