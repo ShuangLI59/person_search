@@ -17,7 +17,7 @@ DATASET=psdb
 
 array=( $@ )
 len=${#array[@]}
-EXTRA_ARGS=${array[@]:3:$len}
+EXTRA_ARGS=${array[@]:1:$len}
 EXTRA_ARGS_SLUG=${EXTRA_ARGS// /_}
 
 case $DATASET in
