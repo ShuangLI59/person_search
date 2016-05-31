@@ -34,12 +34,10 @@ def _compute_iou(a, b):
     return inter * 1.0 / union
 
 def load_probe(root_dir, images_dir, gallery_size):
-    fname = 'TestG{}'.format(gallery_size)
+    fname = 'TestG{}'.format(gallery_size if gallery_size > 0 else 100)
     protoc = loadmat(osp.join(root_dir, 'annotation/test/train_test',
-                              fname + '.mat'))
-    protoc = protoc[fname].squeeze()
-    images = []
-    rois = []
+                              fname + '.mat'))[fname].squeeze()
+    images, rois = [], []
     for item in protoc['Query']:
         im_name = str(item['imname'][0,0][0])
         box = item['idlocate'][0,0][0].astype(np.int32)
@@ -48,7 +46,7 @@ def load_probe(root_dir, images_dir, gallery_size):
         rois.append(box)
     return protoc, images, rois
 
-def evaluate(protoc, images, result_dir):
+def evaluate(protoc, images, result_dir, use_full_set=False):
     gallery_det = unpickle(osp.join(result_dir, 'gallery_detections.pkl'))
     gallery_feat = unpickle(osp.join(result_dir, 'gallery_features.pkl'))
     gallery_det = gallery_det[1]
@@ -75,8 +73,10 @@ def evaluate(protoc, images, result_dir):
         feat_p = probe_feat[i][np.newaxis, :]
         count_gt = 0
         count_tp = 0
+        tested = set()
         for item in protoc['Gallery'][i].squeeze():
             gallery_imname = str(item[0][0])
+            tested.add(gallery_imname)
             gt = item[1][0].astype(np.int32)
             count_gt += (gt.size > 0)
             if gallery_imname not in name_to_det_feat: continue
@@ -97,6 +97,15 @@ def evaluate(protoc, images, result_dir):
                         break
             y_true.extend(list(label))
             y_score.extend(list(-dis))
+        if use_full_set:
+            for gallery_imname in images:
+                if gallery_imname in tested: continue
+                if gallery_imname not in name_to_det_feat: continue
+                det, feat_g = name_to_det_feat[gallery_imname]
+                dis = np.sum((feat_p - feat_g) ** 2, axis=1)
+                label = np.zeros(len(dis), dtype=np.int32)
+                y_true.extend(list(label))
+                y_score.extend(list(-dis))
         assert count_tp <= count_gt
         recall_rate = count_tp * 1.0 / count_gt
         ap = average_precision_score(y_true, y_score) * recall_rate
@@ -151,7 +160,7 @@ def parse_args():
     parser.add_argument('--gallery_size',
                         help='gallery size for evaluation',
                         type=int, default=100,
-                        choices=[50, 100, 500, 1000, 2000, 4000])
+                        choices=[0, 50, 100, 500, 1000, 2000, 4000])
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -206,4 +215,4 @@ if __name__ == '__main__':
                           output_dir)
 
     # Evaluate
-    evaluate(protoc, imdb.image_index, output_dir)
+    evaluate(protoc, imdb.image_index, output_dir, args.gallery_size == 0)
