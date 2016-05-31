@@ -7,60 +7,57 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 
-"""Reval = re-eval. Re-evaluate saved detections."""
+"""Reval = re-eval. Re-evaluate saved results."""
 
 import _init_paths
 from fast_rcnn.test import apply_nms
 from fast_rcnn.config import cfg
 from datasets.factory import get_imdb
 import cPickle
-import os, sys, argparse
+import sys
+import os.path as osp
 import numpy as np
+from argparse import ArgumentParser
+from scipy.io import loadmat
 
-def parse_args():
-    """
-    Parse input arguments
-    """
-    parser = argparse.ArgumentParser(description='Re-evaluate results')
-    parser.add_argument('output_dir', nargs=1, help='results directory',
-                        type=str)
-    parser.add_argument('--imdb', dest='imdb_name',
-                        help='dataset to re-evaluate',
-                        default='voc_2007_test', type=str)
-    parser.add_argument('--matlab', dest='matlab_eval',
-                        help='use matlab for evaluation',
-                        action='store_true')
-    parser.add_argument('--comp', dest='comp_mode', help='competition mode',
-                        action='store_true')
-    parser.add_argument('--nms', dest='apply_nms', help='apply nms',
-                        action='store_true')
+if osp.dirname(__file__) not in sys.path:
+    sys.path.insert(0, osp.dirname(__file__))
 
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(1)
+from test_net import evaluate
 
-    args = parser.parse_args()
-    return args
 
-def from_dets(imdb_name, output_dir, args):
-    imdb = get_imdb(imdb_name)
-    imdb.competition_mode(args.comp_mode)
-    imdb.config['matlab_eval'] = args.matlab_eval
-    with open(os.path.join(output_dir, 'detections.pkl'), 'rb') as f:
-        dets = cPickle.load(f)
+def load_protoc(root_dir, gallery_size):
+    fname = 'TestG{}'.format(gallery_size if gallery_size > 0 else 100)
+    protoc = loadmat(osp.join(root_dir, 'annotation/test/train_test',
+                              fname + '.mat'))[fname].squeeze()
+    return protoc
 
-    if args.apply_nms:
-        print 'Applying NMS to all detections'
-        nms_dets = apply_nms(dets, cfg.TEST.NMS)
-    else:
-        nms_dets = dets
 
-    print 'Evaluating detections'
-    imdb.evaluate_detections(nms_dets, output_dir)
+def main(args):
+    imdb = get_imdb(args.imdb_name)
+    protoc = load_protoc(imdb._root_dir, args.gallery_size)
+    evaluate(protoc, imdb.image_index, args.result_dir, args.gallery_size == 0)
+
 
 if __name__ == '__main__':
-    args = parse_args()
-
-    output_dir = os.path.abspath(args.output_dir[0])
-    imdb_name = args.imdb_name
-    from_dets(imdb_name, output_dir, args)
+    parser = ArgumentParser(
+        description="Re-evaluate the person search result"
+    )
+    parser.add_argument(
+        'result_dir',
+        help="Result directory containing *.pkl"
+    )
+    parser.add_argument(
+        '--imdb', dest='imdb_name',
+        default='psdb_test',
+        help="Dataset to test"
+    )
+    parser.add_argument(
+        '--gallery_size',
+        type=int,
+        choices=[0, 50, 100, 500, 1000, 2000, 4000],
+        default=0,
+        help="Gallery size. 0 means using full gallery set"
+    )
+    args = parser.parse_args()
+    main(args)
