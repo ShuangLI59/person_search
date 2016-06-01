@@ -73,7 +73,7 @@ def evaluate(protoc, images, result_dir, use_full_set=False):
         feat_p = probe_feat[i][np.newaxis, :]
         count_gt = 0
         count_tp = 0
-        tested = set()
+        tested = set([str(protoc['Query'][i]['imname'][0,0][0])])
         for item in protoc['Gallery'][i].squeeze():
             gallery_imname = str(item[0][0])
             tested.add(gallery_imname)
