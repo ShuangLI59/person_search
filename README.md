@@ -16,7 +16,7 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
   ```
 
   You can download my [Makefile.config](http://www.cs.berkeley.edu/~rbg/fast-rcnn-data/Makefile.config) for reference.
-2. Python packages you might not have: `cython`, `python-opencv`, `easydict (>=1.6)`
+2. Python packages you might not have: `Cython`, `python-opencv`, `easydict (>=1.6)`, `PyYAML`
 3. MATLAB is required for processing the raw data.
 
 ## Installation
@@ -67,10 +67,15 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
       --cfg experiments/cfgs/train.yml \
       --imdb psdb_test
     ```
+    The result should be around
+    ```Shell
+    mAP: 55.79%
+    top-1: 62.17%
+    ```
 
 ## Citation
 
-    @article{xiao2016end,
+    @article{xiaoli2016end,
       title={End-to-End Deep Learning for Person Search},
       author={Xiao, Tong and Li, Shuang and Wang, Bochao and Lin, Liang and Wang, Xiaogang},
       journal={arXiv:1604.01850},
