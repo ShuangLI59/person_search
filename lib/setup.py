@@ -47,9 +47,13 @@ def locate_cuda():
                 'located in your $PATH. Either add it to your path, or set $CUDAHOME')
         home = os.path.dirname(os.path.dirname(nvcc))
 
+    # cudaconfig = {'home':home, 'nvcc':nvcc,
+    #               'include': pjoin(home, 'include'),
+    #               'lib64': pjoin(home, 'lib64')}
+
     cudaconfig = {'home':home, 'nvcc':nvcc,
                   'include': pjoin(home, 'include'),
-                  'lib64': pjoin(home, 'lib64')}
+                  'lib64': pjoin(home, 'lib/x86_64-linux-gnu')}
     for k, v in cudaconfig.iteritems():
         if not os.path.exists(v):
             raise EnvironmentError('The CUDA %s path could not be located in %s' % (k, v))
