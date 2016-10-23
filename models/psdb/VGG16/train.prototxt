@@ -1,3 +1,7 @@
+mem_param {
+  optimize_train: false
+  optimize_test: false
+}
 name: "VGG_ILSVRC_16_layers"
 layer {
   name: "input-data"
