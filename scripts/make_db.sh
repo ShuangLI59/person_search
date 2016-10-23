@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DATA=data/psdb
-CAFFE=caffe-fast-rcnn
+CAFFE=caffe
 
 cd $(dirname ${BASH_SOURCE[0]})/../
 
