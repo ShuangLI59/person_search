@@ -19,15 +19,17 @@ import argparse
 import pprint
 import numpy as np
 import sys
+import os
+from mpi4py import MPI
 
 def parse_args():
     """
     Parse input arguments
     """
     parser = argparse.ArgumentParser(description='Train a Fast R-CNN network')
-    parser.add_argument('--gpu', dest='gpu_id',
-                        help='GPU device id to use [0]',
-                        default=0, type=int)
+    parser.add_argument('--gpu', dest='gpu',
+                        help='GPU device id to use [0,1,2,3,4,5,6,7,8]',
+                        default='0', type=str)
     parser.add_argument('--solver', dest='solver',
                         help='solver prototxt',
                         default=None, type=str)
@@ -77,6 +79,14 @@ def combined_roidb(imdb_names):
     return imdb, roidb
 
 if __name__ == '__main__':
+    # get mpi config
+    comm = MPI.COMM_WORLD
+    mpi_size = comm.Get_size()
+    mpi_rank = comm.Get_rank()
+    if mpi_rank > 0:
+        # disable print on other mpi processes
+        sys.stdout = open(os.devnull, 'w')
+
     args = parse_args()
 
     print('Called with args:')
@@ -87,19 +97,23 @@ if __name__ == '__main__':
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
 
-    cfg.GPU_ID = args.gpu_id
+    # parse gpus
+    gpus = map(int, args.gpu.split(','))
+    assert len(gpus) >= mpi_size, "Number of GPUs must be >= MPI size"
+    cfg.GPU_ID = gpus[mpi_rank]
 
     print('Using config:')
     pprint.pprint(cfg)
+
+    # set up caffe
+    caffe.mpi_init()
+    caffe.set_mode_gpu()
+    caffe.set_device(cfg.GPU_ID)
 
     if not args.randomize:
         # fix the random seeds (numpy and caffe) for reproducibility
         np.random.seed(cfg.RNG_SEED)
         caffe.set_random_seed(cfg.RNG_SEED)
-
-    # set up caffe
-    caffe.set_mode_gpu()
-    caffe.set_device(args.gpu_id)
 
     imdb, roidb = combined_roidb(args.imdb_name)
     print '{:d} roidb entries'.format(len(roidb))
@@ -110,3 +124,5 @@ if __name__ == '__main__':
     train_net(args.solver, roidb, output_dir,
               pretrained_model=args.pretrained_model,
               max_iters=args.max_iters)
+
+    caffe.mpi_finalize()
