@@ -200,41 +200,16 @@ def vis_detections(im, class_name, dets, thresh=0.3):
             plt.title('{}  {:.3f}'.format(class_name, score))
             plt.show()
 
-def apply_nms(all_boxes, thresh):
-    """Apply non-maximum suppression to all predicted boxes output by the
-    test_net method.
-    """
-    num_classes = len(all_boxes)
-    num_images = len(all_boxes[0])
-    nms_boxes = [[[] for _ in xrange(num_images)]
-                 for _ in xrange(num_classes)]
-    for cls_ind in xrange(num_classes):
-        for im_ind in xrange(num_images):
-            dets = all_boxes[cls_ind][im_ind]
-            if dets == []:
-                continue
-            # CPU NMS is much faster than GPU NMS when the number of boxes
-            # is relative small (e.g., < 10k)
-            # TODO(rbg): autotune NMS dispatch
-            keep = nms(dets, thresh, force_cpu=True)
-            if len(keep) == 0:
-                continue
-            nms_boxes[cls_ind][im_ind] = dets[keep, :].copy()
-    return nms_boxes
-
-def test_net_on_gallery_set(net, imdb, feat_blob,
+def test_net_on_gallery_set(net, imdb, start, end, feat_blob,
                             max_per_image=100, thresh=0.05, vis=False):
-    num_images = len(imdb.image_index)
+    assert imdb.num_classes == 2, "Only support pedestrian detection (two classes)"
+    num_images = end - start
     # all detections are collected into:
-    #    all_boxes[cls][image] = N x 5 array of detections in
+    #    all_boxes[image] = N x 5 array of detections in
     #    (x1, y1, x2, y2, score)
-    #    all_features[cls][image] = N x D array of features
-    all_boxes = [[[] for _ in xrange(num_images)]
-                 for _ in xrange(imdb.num_classes)]
-    all_features = [[[] for _ in xrange(num_images)]
-                    for _ in xrange(imdb.num_classes)]
-
-    output_dir = get_output_dir(imdb, net)
+    #    all_features[image] = N x D array of features
+    all_boxes = [0 for _ in xrange(num_images)]
+    all_features = [0 for _ in xrange(num_images)]
 
     # timers
     _t = {'im_detect' : Timer(), 'misc' : Timer()}
@@ -243,6 +218,7 @@ def test_net_on_gallery_set(net, imdb, feat_blob,
         roidb = imdb.roidb
 
     for i in xrange(num_images):
+        im_index = start + i
         # filter out any ground truth boxes
         if cfg.TEST.HAS_RPN:
             box_proposals = None
@@ -252,47 +228,42 @@ def test_net_on_gallery_set(net, imdb, feat_blob,
             # detection on the *non*-ground-truth rois. We select those the rois
             # that have the gt_classes field set to 0, which means there's no
             # ground truth.
-            box_proposals = roidb[i]['boxes'][roidb[i]['gt_classes'] == 0]
+            box_proposals = roidb[im_index]['boxes'][roidb[im_index]['gt_classes'] == 0]
 
-        im = cv2.imread(imdb.image_path_at(i))
+        im = cv2.imread(imdb.image_path_at(im_index))
         _t['im_detect'].tic()
         scores, boxes, features = im_detect(net, im, feat_blob, box_proposals)
         _t['im_detect'].toc()
 
         _t['misc'].tic()
-        # skip j = 0, because it's the background class
-        for j in xrange(1, imdb.num_classes):
-            inds = np.where(scores[:, j] > thresh)[0]
-            cls_scores = scores[inds, j]
-            cls_boxes = boxes[inds, j*4:(j+1)*4]
-            cls_dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])) \
-                .astype(np.float32, copy=False)
-            keep = nms(cls_dets, cfg.TEST.NMS)
-            cls_dets = cls_dets[keep, :]
-            if vis:
-                vis_detections(im, imdb.classes[j], cls_dets)
-            all_boxes[j][i] = cls_dets
-            all_features[j][i] = features[keep, :]
+
+        j = 1  # only consider j = 1 (pedestrian class)
+        inds = np.where(scores[:, j] > thresh)[0]
+        cls_scores = scores[inds, j]
+        cls_boxes = boxes[inds, j*4:(j+1)*4]
+        cls_dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])) \
+            .astype(np.float32, copy=False)
+        keep = nms(cls_dets, cfg.TEST.NMS)
+        cls_dets = cls_dets[keep, :]
+        if vis:
+            vis_detections(im, imdb.classes[j], cls_dets)
+        all_boxes[i] = cls_dets
+        all_features[i] = features[keep, :]
 
         # Limit to max_per_image detections *over all classes*
         if max_per_image > 0:
-            image_scores = np.hstack([all_boxes[j][i][:, -1]
+            image_scores = np.hstack([all_boxes[i][:, -1]
                                       for j in xrange(1, imdb.num_classes)])
             if len(image_scores) > max_per_image:
                 image_thresh = np.sort(image_scores)[-max_per_image]
                 for j in xrange(1, imdb.num_classes):
-                    keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
-                    all_boxes[j][i] = all_boxes[j][i][keep, :]
-                    all_features[j][i] = all_features[j][i][keep, :]
+                    keep = np.where(all_boxes[i][:, -1] >= image_thresh)[0]
+                    all_boxes[i] = all_boxes[i][keep, :]
+                    all_features[i] = all_features[i][keep, :]
         _t['misc'].toc()
 
         print 'im_detect: {:d}/{:d} {:.3f}s {:.3f}s' \
               .format(i + 1, num_images, _t['im_detect'].average_time,
                       _t['misc'].average_time)
 
-    det_file = os.path.join(output_dir, 'gallery_detections.pkl')
-    with open(det_file, 'wb') as f:
-        cPickle.dump(all_boxes, f, cPickle.HIGHEST_PROTOCOL)
-    feat_file = os.path.join(output_dir, 'gallery_features.pkl')
-    with open(feat_file, 'wb') as f:
-        cPickle.dump(all_features, f, cPickle.HIGHEST_PROTOCOL)
+    return all_boxes, all_features

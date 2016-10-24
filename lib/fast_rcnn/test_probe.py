@@ -130,12 +130,12 @@ def im_exfeat(net, im, roi, feat_blob):
     return features
 
 
-def test_net_on_probe_set(net, images, rois, feat_blob, output_dir):
+def test_net_on_probe_set(net, images, rois, start, end, feat_blob):
     if not cfg.TEST.HAS_RPN:
         raise NotImplementedError("Currently only support RPN")
 
-    num_images = len(images)
-    assert len(rois) == num_images
+    assert len(rois) == len(images)
+    num_images = end - start
 
     # features = num_images x D array
     features = []
@@ -144,8 +144,9 @@ def test_net_on_probe_set(net, images, rois, feat_blob, output_dir):
     _t = {'im_exfeat' : Timer(), 'misc' : Timer()}
 
     for i in xrange(num_images):
-        im = cv2.imread(images[i])
-        roi = rois[i].reshape(1, 4)
+        im_index = start + i
+        im = cv2.imread(images[im_index])
+        roi = rois[im_index].reshape(1, 4)
         _t['im_exfeat'].tic()
         feat = im_exfeat(net, im, roi, feat_blob)
         features.append(feat)
@@ -154,6 +155,4 @@ def test_net_on_probe_set(net, images, rois, feat_blob, output_dir):
         print 'im_exfeat: {:d}/{:d} {:.3f}s' \
               .format(i + 1, num_images, _t['im_exfeat'].average_time)
 
-    feat_file = os.path.join(output_dir, 'probe_features.pkl')
-    with open(feat_file, 'wb') as f:
-        cPickle.dump(features, f, cPickle.HIGHEST_PROTOCOL)
+    return features

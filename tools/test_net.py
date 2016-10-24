@@ -14,15 +14,17 @@ from fast_rcnn.test_gallery import test_net_on_gallery_set
 from fast_rcnn.test_probe import test_net_on_probe_set
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
 from datasets.factory import get_imdb
-from utils import unpickle
+from utils import pickle, unpickle
 import caffe
 import argparse
 import pprint
 import time, os, sys
 import os.path as osp
 import numpy as np
+import itertools
 from scipy.io import loadmat
 from sklearn.metrics import average_precision_score
+from mpi4py import MPI
 
 def _compute_iou(a, b):
     x1 = max(a[0], b[0])
@@ -49,8 +51,6 @@ def load_probe(root_dir, images_dir, gallery_size):
 def evaluate(protoc, images, result_dir, use_full_set=False):
     gallery_det = unpickle(osp.join(result_dir, 'gallery_detections.pkl'))
     gallery_feat = unpickle(osp.join(result_dir, 'gallery_features.pkl'))
-    gallery_det = gallery_det[1]
-    gallery_feat = gallery_feat[1]
     probe_feat = unpickle(osp.join(result_dir, 'probe_features.pkl'))
 
     assert len(images) == len(gallery_det)
@@ -125,8 +125,9 @@ def parse_args():
     Parse input arguments
     """
     parser = argparse.ArgumentParser(description='Test a Fast R-CNN network')
-    parser.add_argument('--gpu', dest='gpu_id', help='GPU id to use',
-                        default=0, type=int)
+    parser.add_argument('--gpu', dest='gpu',
+                        help='GPU device id to use [0,1,2,3,4,5,6,7,8]',
+                        default=0, type=str)
     parser.add_argument('--gallery_def',
                         help='prototxt file defining the gallery network',
                         default=None, type=str)
@@ -170,6 +171,14 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
+    # get mpi config
+    comm = MPI.COMM_WORLD
+    mpi_size = comm.Get_size()
+    mpi_rank = comm.Get_rank()
+    if mpi_rank > 0:
+        # disable print on other mpi processes
+        sys.stdout = open(os.devnull, 'w')
+
     args = parse_args()
 
     print('Called with args:')
@@ -180,7 +189,10 @@ if __name__ == '__main__':
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
 
-    cfg.GPU_ID = args.gpu_id
+    # parse gpus
+    gpus = map(int, args.gpu.split(','))
+    assert len(gpus) >= mpi_size, "Number of GPUs must be >= MPI size"
+    cfg.GPU_ID = gpus[mpi_rank]
 
     print('Using config:')
     pprint.pprint(cfg)
@@ -189,8 +201,23 @@ if __name__ == '__main__':
         print('Waiting for {} to exist...'.format(args.caffemodel))
         time.sleep(10)
 
+    # set up caffe
+    caffe.mpi_init()
     caffe.set_mode_gpu()
-    caffe.set_device(args.gpu_id)
+    caffe.set_device(cfg.GPU_ID)
+
+    # functions for mpi
+    def _dispatch_job(num_jobs, num_workers, worker_id):
+        jobs_per_worker = num_jobs // num_workers
+        start = worker_id * jobs_per_worker
+        end = min(start + jobs_per_worker, num_jobs)
+        return start, end
+
+    def _collect_result(data):
+        data = comm.gather(data, root=0)
+        if mpi_rank == 0:
+            data = list(itertools.chain.from_iterable(data))
+        return data
 
     # Detect and store re-id features for all the images in the test images pool
     net = caffe.Net(args.gallery_def, args.caffemodel, caffe.TEST)
@@ -199,20 +226,36 @@ if __name__ == '__main__':
     imdb.competition_mode(args.comp_mode)
     if not cfg.TEST.HAS_RPN:
         imdb.set_proposal_method(cfg.TEST.PROPOSAL_METHOD)
-    test_net_on_gallery_set(net, imdb, args.feat_blob,
-                            max_per_image=args.max_per_image, vis=args.vis)
 
     root_dir = imdb._root_dir
     images_dir = imdb._data_path
     output_dir = get_output_dir(imdb, net)
+
+    start, end = _dispatch_job(len(imdb.image_index), mpi_size, mpi_rank)
+    gboxes, gfeatures = test_net_on_gallery_set(
+        net, imdb, start, end, args.feat_blob,
+        max_per_image=args.max_per_image, vis=args.vis)
+    gboxes = _collect_result(gboxes)
+    gfeatures = _collect_result(gfeatures)
+    del net # to release the cudnn conv static workspace
 
     # Extract features for probe people
     net = caffe.Net(args.probe_def, args.caffemodel, caffe.TEST)
     net.name = os.path.splitext(osp.basename(args.caffemodel))[0]
     protoc, probe_images, probe_rois = load_probe(
         root_dir, images_dir, args.gallery_size)
-    test_net_on_probe_set(net, probe_images, probe_rois, args.feat_blob,
-                          output_dir)
+
+    start, end = _dispatch_job(len(probe_images), mpi_size, mpi_rank)
+    pfeatures = test_net_on_probe_set(
+        net, probe_images, probe_rois, start, end, args.feat_blob)
+    pfeatures = _collect_result(pfeatures)
+    del net
 
     # Evaluate
-    evaluate(protoc, imdb.image_index, output_dir, args.gallery_size == 0)
+    if mpi_rank == 0:
+        pickle(gboxes, osp.join(output_dir, 'gallery_detections.pkl'))
+        pickle(gfeatures, osp.join(output_dir, 'gallery_features.pkl'))
+        pickle(pfeatures, osp.join(output_dir, 'probe_features.pkl'))
+        evaluate(protoc, imdb.image_index, output_dir, args.gallery_size == 0)
+
+    caffe.mpi_finalize()
