@@ -210,7 +210,7 @@ if __name__ == '__main__':
     def _dispatch_job(num_jobs, num_workers, worker_id):
         jobs_per_worker = num_jobs // num_workers
         start = worker_id * jobs_per_worker
-        end = min(start + jobs_per_worker, num_jobs)
+        end = num_jobs if worker_id == num_workers-1 else start + jobs_per_worker
         return start, end
 
     def _collect_result(data):
