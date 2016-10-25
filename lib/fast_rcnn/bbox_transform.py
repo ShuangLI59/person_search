@@ -54,9 +54,9 @@ def bbox_transform_inv(boxes, deltas):
     # y1
     pred_boxes[:, 1::4] = pred_ctr_y - 0.5 * pred_h
     # x2
-    pred_boxes[:, 2::4] = pred_ctr_x + 0.5 * pred_w
+    pred_boxes[:, 2::4] = pred_ctr_x + 0.5 * pred_w - 1
     # y2
-    pred_boxes[:, 3::4] = pred_ctr_y + 0.5 * pred_h
+    pred_boxes[:, 3::4] = pred_ctr_y + 0.5 * pred_h - 1
 
     return pred_boxes
 
