@@ -52,7 +52,7 @@ layer {
   top: "caffe.SpatialConvolution_0"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -118,7 +118,7 @@ layer {
   top: "caffe.SpatialConvolution_4"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -169,7 +169,7 @@ layer {
   top: "caffe.SpatialConvolution_7"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -220,7 +220,7 @@ layer {
   top: "caffe.SpatialConvolution_10"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -243,7 +243,7 @@ layer {
   top: "caffe.SpatialConvolution_11"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -301,7 +301,7 @@ layer {
   top: "caffe.SpatialConvolution_15"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -352,7 +352,7 @@ layer {
   top: "caffe.SpatialConvolution_18"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -403,7 +403,7 @@ layer {
   top: "caffe.SpatialConvolution_21"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -461,7 +461,7 @@ layer {
   top: "caffe.SpatialConvolution_25"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -512,7 +512,7 @@ layer {
   top: "caffe.SpatialConvolution_28"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -563,7 +563,7 @@ layer {
   top: "caffe.SpatialConvolution_31"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -621,7 +621,7 @@ layer {
   top: "caffe.SpatialConvolution_35"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -672,7 +672,7 @@ layer {
   top: "caffe.SpatialConvolution_38"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -723,7 +723,7 @@ layer {
   top: "caffe.SpatialConvolution_41"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -746,7 +746,7 @@ layer {
   top: "caffe.SpatialConvolution_42"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -804,7 +804,7 @@ layer {
   top: "caffe.SpatialConvolution_46"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -855,7 +855,7 @@ layer {
   top: "caffe.SpatialConvolution_49"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -906,7 +906,7 @@ layer {
   top: "caffe.SpatialConvolution_52"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -964,7 +964,7 @@ layer {
   top: "caffe.SpatialConvolution_56"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1015,7 +1015,7 @@ layer {
   top: "caffe.SpatialConvolution_59"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1066,7 +1066,7 @@ layer {
   top: "caffe.SpatialConvolution_62"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1124,7 +1124,7 @@ layer {
   top: "caffe.SpatialConvolution_66"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1175,7 +1175,7 @@ layer {
   top: "caffe.SpatialConvolution_69"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1226,7 +1226,7 @@ layer {
   top: "caffe.SpatialConvolution_72"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1284,7 +1284,7 @@ layer {
   top: "caffe.SpatialConvolution_76"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1335,7 +1335,7 @@ layer {
   top: "caffe.SpatialConvolution_79"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1386,7 +1386,7 @@ layer {
   top: "caffe.SpatialConvolution_82"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1409,7 +1409,7 @@ layer {
   top: "caffe.SpatialConvolution_83"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1467,7 +1467,7 @@ layer {
   top: "caffe.SpatialConvolution_87"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1518,7 +1518,7 @@ layer {
   top: "caffe.SpatialConvolution_90"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1569,7 +1569,7 @@ layer {
   top: "caffe.SpatialConvolution_93"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1627,7 +1627,7 @@ layer {
   top: "caffe.SpatialConvolution_97"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1678,7 +1678,7 @@ layer {
   top: "caffe.SpatialConvolution_100"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1729,7 +1729,7 @@ layer {
   top: "caffe.SpatialConvolution_103"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1787,7 +1787,7 @@ layer {
   top: "caffe.SpatialConvolution_107"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1838,7 +1838,7 @@ layer {
   top: "caffe.SpatialConvolution_110"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1889,7 +1889,7 @@ layer {
   top: "caffe.SpatialConvolution_113"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1947,7 +1947,7 @@ layer {
   top: "caffe.SpatialConvolution_117"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -1998,7 +1998,7 @@ layer {
   top: "caffe.SpatialConvolution_120"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2049,7 +2049,7 @@ layer {
   top: "caffe.SpatialConvolution_123"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2107,7 +2107,7 @@ layer {
   top: "caffe.SpatialConvolution_127"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2158,7 +2158,7 @@ layer {
   top: "caffe.SpatialConvolution_130"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2209,7 +2209,7 @@ layer {
   top: "caffe.SpatialConvolution_133"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2267,7 +2267,7 @@ layer {
   top: "caffe.SpatialConvolution_137"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2318,7 +2318,7 @@ layer {
   top: "caffe.SpatialConvolution_140"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2369,7 +2369,7 @@ layer {
   top: "caffe.SpatialConvolution_143"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2392,7 +2392,7 @@ layer {
   top: "caffe.SpatialConvolution_144"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2450,7 +2450,7 @@ layer {
   top: "caffe.SpatialConvolution_148"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2501,7 +2501,7 @@ layer {
   top: "caffe.SpatialConvolution_151"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2552,7 +2552,7 @@ layer {
   top: "caffe.SpatialConvolution_154"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2610,7 +2610,7 @@ layer {
   top: "caffe.SpatialConvolution_158"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2661,7 +2661,7 @@ layer {
   top: "caffe.SpatialConvolution_161"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
@@ -2712,7 +2712,7 @@ layer {
   top: "caffe.SpatialConvolution_164"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
