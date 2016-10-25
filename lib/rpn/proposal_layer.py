@@ -111,6 +111,12 @@ class ProposalLayer(caffe.Layer):
         # in slowest to fastest order
         bbox_deltas = bbox_deltas.transpose((0, 2, 3, 1)).reshape((-1, 4))
 
+        # Safe-guard for unexpected large dw or dh value
+        # Since our proposals are only human, some background region features
+        # will never receive gradients from bbox regression. Thus their
+        # predictions may drift away.
+        bbox_deltas[:, 2:] = np.maximum(np.minimum(bbox_deltas[:, 2:], 10), -10)
+
         # Same story for the scores:
         #
         # scores are (1, A, H, W) format
