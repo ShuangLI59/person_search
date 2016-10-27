@@ -1,50 +1,25 @@
 mem_param {
   optimize_train: true
   optimize_test: true
+  exclude_blob: "rois"
+  exclude_blob: "feat"
 }
 name: "ResNet50"
-layer {
-  name: "data"
-  type: "Data"
-  top: "data"
-  top: "label"
-  include {
-    phase: TRAIN
-  }
-  transform_param {
-    crop_size: 224
-    mean_value: 104
-    mean_value: 117
-    mean_value: 124
-    mirror: true
-  }
-  data_param {
-    source: "data/psdb/pretrain_db/train_lmdb"
-    batch_size: 64
-    backend: LMDB
-  }
+
+input: "data"
+input_shape {
+  dim: 1
+  dim: 3
+  dim: 224
+  dim: 224
 }
-layer {
-  name: "data"
-  type: "Data"
-  top: "data"
-  top: "label"
-  include {
-    phase: TEST
-  }
-  transform_param {
-    crop_size: 224
-    mean_value: 104
-    mean_value: 117
-    mean_value: 123
-    mirror: false
-  }
-  data_param {
-    source: "data/psdb/pretrain_db/val_lmdb"
-    batch_size: 50
-    backend: LMDB
-  }
+
+input: "im_info"
+input_shape {
+  dim: 1
+  dim: 3
 }
+
 layer {
   name: "caffe.SpatialConvolution_0"
   type: "Convolution"
@@ -1812,10 +1787,120 @@ layer {
   bottom: "caffe.BN_105"
   top: "caffe.BN_105"
 }
+
+
+#========= RPN ============
+
+layer {
+  name: "rpn_conv/3x3"
+  type: "Convolution"
+  bottom: "caffe.BN_105"
+  top: "rpn/output"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 512
+    kernel_size: 3 pad: 1 stride: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0 }
+  }
+}
+layer {
+  name: "rpn_relu/3x3"
+  type: "ReLU"
+  bottom: "rpn/output"
+  top: "rpn/output"
+}
+
+layer {
+  name: "rpn_cls_score"
+  type: "Convolution"
+  bottom: "rpn/output"
+  top: "rpn_cls_score"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 18   # 2(bg/fg) * 9(anchors)
+    kernel_size: 1 pad: 0 stride: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0 }
+  }
+}
+
+layer {
+  name: "rpn_bbox_pred"
+  type: "Convolution"
+  bottom: "rpn/output"
+  top: "rpn_bbox_pred"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 36   # 4 * 9(anchors)
+    kernel_size: 1 pad: 0 stride: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0 }
+  }
+}
+
+layer {
+   bottom: "rpn_cls_score"
+   top: "rpn_cls_score_reshape"
+   name: "rpn_cls_score_reshape"
+   type: "Reshape"
+   reshape_param { shape { dim: 0 dim: 2 dim: -1 dim: 0 } }
+}
+
+#========= RoI Proposal ============
+
+layer {
+  name: "rpn_cls_prob"
+  type: "Softmax"
+  bottom: "rpn_cls_score_reshape"
+  top: "rpn_cls_prob"
+}
+
+layer {
+  name: "rpn_cls_prob_reshape"
+  type: "Reshape"
+  bottom: "rpn_cls_prob"
+  top: "rpn_cls_prob_reshape"
+  reshape_param { shape { dim: 0 dim: 18 dim: -1 dim: 0 } }
+}
+
+layer {
+  name: "proposal"
+  type: "Python"
+  bottom: "rpn_cls_prob_reshape"
+  bottom: "rpn_bbox_pred"
+  bottom: "im_info"
+  top: "rois"
+  python_param {
+    module: "rpn.proposal_layer"
+    layer: "ProposalLayer"
+    param_str: "'feat_stride': 16"
+  }
+}
+
+#========= RCNN ============
+
+layer {
+  name: "roi_pool"
+  type: "ROIPooling"
+  bottom: "caffe.BN_105"
+  bottom: "rois"
+  top: "roi_pool"
+  roi_pooling_param {
+    pooled_w: 14
+    pooled_h: 14
+    spatial_scale: 0.0625 # 1/16
+  }
+}
+
+
 layer {
   name: "caffe.SpatialConvolution_107"
   type: "Convolution"
-  bottom: "caffe.BN_105"
+  bottom: "roi_pool"
   top: "caffe.SpatialConvolution_107"
   param {
     lr_mult: 1
@@ -1943,7 +2028,7 @@ layer {
   name: "caffe.Eltwise_114"
   type: "Eltwise"
   bottom: "caffe.SpatialConvolution_113"
-  bottom: "caffe.BN_105"
+  bottom: "roi_pool"
   top: "caffe.Eltwise_114"
 }
 layer {
@@ -2868,6 +2953,29 @@ layer {
   }
 }
 layer {
+  name: "bbox_pred"
+  type: "InnerProduct"
+  bottom: "caffe.Pooling_168"
+  top: "bbox_pred"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  inner_product_param {
+    num_output: 8
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
   name: "pid_score"
   type: "InnerProduct"
   bottom: "feat"
@@ -2893,21 +3001,8 @@ layer {
   }
 }
 layer {
-  name: "loss"
-  type: "SoftmaxWithLoss"
+  name: "pid_prob"
+  type: "Softmax"
   bottom: "pid_score"
-  bottom: "label"
-  top: "loss"
-  propagate_down: 1
-  propagate_down: 0
-}
-layer {
-  name: "accuracy"
-  type: "Accuracy"
-  bottom: "pid_score"
-  bottom: "label"
-  top: "accuracy"
-  include {
-    phase: TEST
-  }
+  top: "pid_prob"
 }
