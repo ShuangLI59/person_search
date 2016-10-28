@@ -165,6 +165,12 @@ def im_detect(net, im, feat_blob, boxes=None):
     if cfg.TEST.BBOX_REG:
         # Apply bounding-box regression deltas
         box_deltas = blobs_out['bbox_pred']
+        # As we no longer scale and shift the bbox_pred weights when snapshot,
+        # we need to manually do this during test.
+        if cfg.TRAIN.BBOX_NORMALIZE_TARGETS and \
+                cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
+            box_deltas = (box_deltas * np.asarray(cfg.TRAIN.BBOX_NORMALIZE_STDS)
+                + np.asarray(cfg.TRAIN.BBOX_NORMALIZE_MEANS))
         pred_boxes = bbox_transform_inv(boxes, box_deltas)
         pred_boxes = clip_boxes(pred_boxes, im.shape)
     else:

@@ -39,6 +39,9 @@ def parse_args():
     parser.add_argument('--weights', dest='pretrained_model',
                         help='initialize with pretrained model weights',
                         default=None, type=str)
+    parser.add_argument('--snapshot', dest='previous_state',
+                        help='initialize with previous solver state',
+                        default=None, type=str)
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
                         default=None, type=str)
@@ -122,6 +125,7 @@ if __name__ == '__main__':
     print 'Output will be saved to `{:s}`'.format(output_dir)
 
     train_net(args.solver, roidb, output_dir,
+              previous_state=args.previous_state,
               pretrained_model=args.pretrained_model,
               max_iters=args.max_iters)
 

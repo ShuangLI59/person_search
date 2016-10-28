@@ -13,9 +13,5 @@ average_loss: 100
 momentum: 0.9
 weight_decay: 0.0005
 
-# We disable standard caffe solver snapshotting and implement our own snapshot
-# function
-snapshot: 0
-# We still use the snapshot prefix, though
-snapshot_prefix: "resnet50"
-
+snapshot: 10000
+snapshot_prefix: "output/psdb_train/resnet50"
