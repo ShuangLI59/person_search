@@ -169,8 +169,10 @@ def im_detect(net, im, feat_blob, boxes=None):
         # we need to manually do this during test.
         if cfg.TRAIN.BBOX_NORMALIZE_TARGETS and \
                 cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
-            box_deltas = (box_deltas * np.asarray(cfg.TRAIN.BBOX_NORMALIZE_STDS)
-                + np.asarray(cfg.TRAIN.BBOX_NORMALIZE_MEANS))
+            num_classes = box_deltas.shape[1] // 4
+            stds = np.tile(cfg.TRAIN.BBOX_NORMALIZE_STDS, num_classes)
+            means = np.tile(cfg.TRAIN.BBOX_NORMALIZE_MEANS, num_classes)
+            box_deltas = box_deltas * stds + means
         pred_boxes = bbox_transform_inv(boxes, box_deltas)
         pred_boxes = clip_boxes(pred_boxes, im.shape)
     else:
