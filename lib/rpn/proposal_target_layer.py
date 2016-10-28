@@ -43,6 +43,11 @@ class ProposalTargetLayer(caffe.Layer):
         if len(top) > 5:
             top[5].reshape(1, 1)
 
+        if DEBUG:
+            self._count_buffer = np.zeros((1000, 3), dtype=np.int32)
+            self._count_index = 0
+            self._count_buffer_full = False
+
     def forward(self, bottom, top):
         # Proposal ROIs (0, x1, y1, x2, y2) coming from RPN
         # (i.e., rpn.proposal_layer.ProposalLayer), or any other source
@@ -73,14 +78,21 @@ class ProposalTargetLayer(caffe.Layer):
                          rois_per_image, self._num_classes, self._bg_aux_label)
 
         if DEBUG:
-            print 'num fg: {}'.format((labels > 0).sum())
-            print 'num bg: {}'.format((labels == 0).sum())
-            self._count += 1
-            self._fg_num += (labels > 0).sum()
-            self._bg_num += (labels == 0).sum()
-            print 'num fg avg: {}'.format(self._fg_num / self._count)
-            print 'num bg avg: {}'.format(self._bg_num / self._count)
-            print 'ratio: {:.3f}'.format(float(self._fg_num) / float(self._bg_num))
+            num_ul = (aux_label == -1).sum()
+            num_lb = ((aux_label >= 0) & (aux_label != self._bg_aux_label)).sum()
+            num_bg = (aux_label == self._bg_aux_label).sum()
+            self._count_buffer[self._count_index] = [num_ul, num_lb, num_bg]
+            self._count_index += 1
+            if self._count_index >= self._count_buffer.shape[0]:
+                self._count_buffer_full = True
+                self._count_index = 0
+            if self._count_buffer_full:
+                avg_ul, avg_lb, avg_bg = self._count_buffer.mean(axis=0)
+            else:
+                avg_ul, avg_lb, avg_bg = self._count_buffer.sum(axis=0) * 1.0 / self._count_index
+            print 'proposal_target  #ul:{:3d}  #lb:{:3d}  #bg:{:4d}   ' \
+                  '#avg-ul:{:5.1f}  #avg-lb:{:5.1f}  #avg-bg:{:6.1f}'.format(
+                      num_ul, num_lb, num_bg, avg_ul, avg_lb, avg_bg)
 
         # sampled rois
         top[0].reshape(*rois.shape)
