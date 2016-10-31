@@ -189,22 +189,10 @@ class psdb(imdb):
         precision, recall, __ = precision_recall_curve(y_true, y_score)
         recall *= det_rate
 
-        try:
-            raise
-            import matplotlib.pyplot as plt
-            plt.plot(recall, precision)
-            plt.xlabel('Recall')
-            plt.ylabel('Precision')
-            plt.xlim([0, 1])
-            plt.ylim([0, 1])
-            title = 'Labeled only  ' if labeled_only else 'All  '
-            title += 'Det Rate: {:.2%}  AP: {:.2%}'.format(det_rate, ap)
-            plt.title(title)
-            plt.show()
-        except:
-            print '{} detection:'.format('labeled only' if labeled_only else
-                                         'all')
-            print '  recall = {:.2%}'.format(det_rate)
+        print '{} detection:'.format('labeled only' if labeled_only else
+                                     'all')
+        print '  recall = {:.2%}'.format(det_rate)
+        if not labeled_only:
             print '  ap = {:.2%}'.format(ap)
 
     def evaluate_search(self, gallery_det, gallery_feat, probe_feat,
