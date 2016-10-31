@@ -96,8 +96,11 @@ def main(args):
 
     # Evaluate
     if mpi_rank == 0:
+        imdb.evaluate_detections(gboxes, det_thresh=args.det_thresh)
+        imdb.evaluate_detections(gboxes, det_thresh=args.det_thresh,
+                                 labeled_only=True)
         imdb.evaluate_cls(gboxes, gfeatures['pid_rank'], gfeatures['pid_label'],
-                          args.det_thresh)
+                          det_thresh=args.det_thresh)
 
 
 if __name__ == '__main__':

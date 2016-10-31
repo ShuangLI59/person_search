@@ -95,8 +95,12 @@ def main(args):
 
     # Evaluate
     if mpi_rank == 0:
+        imdb.evaluate_detections(gboxes, det_thresh=args.det_thresh)
+        imdb.evaluate_detections(gboxes, det_thresh=args.det_thresh,
+                                 labeled_only=True)
         imdb.evaluate_search(gboxes, gfeatures['feat'], pfeatures['feat'],
-                             args.det_thresh, args.gallery_size)
+                             det_thresh=args.det_thresh,
+                             gallery_size=args.gallery_size)
 
 
 if __name__ == '__main__':

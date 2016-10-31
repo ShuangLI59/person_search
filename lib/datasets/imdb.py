@@ -89,17 +89,6 @@ class imdb(object):
     def default_roidb(self):
         raise NotImplementedError
 
-    def evaluate_detections(self, all_boxes, output_dir=None):
-        """
-        all_boxes is a list of length number-of-classes.
-        Each list element is a list of length number-of-images.
-        Each of those list elements is either an empty list []
-        or a numpy array of detection.
-
-        all_boxes[class][image] = [] or np.array of shape #dets x 5
-        """
-        raise NotImplementedError
-
     def _get_widths(self):
       return [PIL.Image.open(self.image_path_at(i)).size[0]
               for i in xrange(self.num_images)]
@@ -254,7 +243,3 @@ class imdb(object):
             a[i]['seg_areas'] = np.hstack((a[i]['seg_areas'],
                                            b[i]['seg_areas']))
         return a
-
-    def competition_mode(self, on):
-        """Turn competition mode on or off."""
-        pass

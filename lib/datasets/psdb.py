@@ -7,7 +7,7 @@ import datasets
 from datasets.imdb import imdb
 from fast_rcnn.config import cfg
 from utils import cython_bbox, pickle, unpickle
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, precision_recall_curve
 
 
 def _compute_iou(a, b):
@@ -49,7 +49,6 @@ class psdb(imdb):
         cache_file = osp.join(self.cache_path, self.name + '_gt_roidb.pkl')
         if osp.isfile(cache_file):
             roidb = unpickle(cache_file)
-            print "{} gt roidb loaded from {}".format(self.name, cache_file)
             return roidb
 
         # Load all images and build a dict from image to boxes
@@ -131,18 +130,29 @@ class psdb(imdb):
 
         return gt_roidb
 
-    def evaluate_detections(self, all_boxes, output_dir):
-        # all_boxes[cls][image] = N x 5 (x1, y1, x2, y2, score)
+    def evaluate_detections(self, gallery_det, det_thresh=0.5, iou_thresh=0.5,
+                            labeled_only=False):
+        """
+        gallery_det (list of ndarray): n_det x [x1, x2, y1, y2, score] per image
+
+        det_thresh (float): filter out gallery detections whose scores below this
+        iou_thresh (float): treat as true positive if IoU is above this threshold
+        labeled_only (bool): filter out unlabeled background people
+        """
+        assert self.num_images == len(gallery_det)
+
         gt_roidb = self.gt_roidb()
-        assert len(all_boxes) == 2
-        assert len(all_boxes[1]) == len(gt_roidb)
-        y_true = []
-        y_score = []
-        count_gt = 0
-        count_tp = 0
-        for gt, det in zip(gt_roidb, all_boxes[1]):
+        y_true, y_score = [], []
+        count_gt, count_tp = 0, 0
+        for gt, det in zip(gt_roidb, gallery_det):
             gt_boxes = gt['boxes']
+            if labeled_only:
+                inds = np.where(gt['gt_pids'].ravel() > 0)[0]
+                if len(inds) == 0: continue
+                gt_boxes = gt_boxes[inds]
             det = np.asarray(det)
+            inds = np.where(det[:, 4].ravel() >= det_thresh)[0]
+            det = det[inds]
             num_gt = gt_boxes.shape[0]
             num_det = det.shape[0]
             if num_det == 0:
@@ -152,7 +162,7 @@ class psdb(imdb):
             for i in xrange(num_gt):
                 for j in xrange(num_det):
                     ious[i, j] = _compute_iou(gt_boxes[i], det[j, :4])
-            tfmat = (ious >= 0.5)
+            tfmat = (ious >= iou_thresh)
             # for each det, keep only the largest iou of all the gt
             for j in xrange(num_det):
                 largest_ind = np.argmax(ious[:, j])
@@ -174,20 +184,28 @@ class psdb(imdb):
             count_tp += tfmat.sum()
             count_gt += num_gt
 
-        from sklearn.metrics import average_precision_score, precision_recall_curve
         det_rate = count_tp * 1.0 / count_gt
         ap = average_precision_score(y_true, y_score) * det_rate
         precision, recall, __ = precision_recall_curve(y_true, y_score)
         recall *= det_rate
 
-        import matplotlib.pyplot as plt
-        plt.plot(recall, precision)
-        plt.xlabel('Recall')
-        plt.ylabel('Precision')
-        plt.xlim([0, 1])
-        plt.ylim([0, 1])
-        plt.title('Det Rate: {:.2%}  AP: {:.2%}'.format(det_rate, ap))
-        plt.show()
+        try:
+            raise
+            import matplotlib.pyplot as plt
+            plt.plot(recall, precision)
+            plt.xlabel('Recall')
+            plt.ylabel('Precision')
+            plt.xlim([0, 1])
+            plt.ylim([0, 1])
+            title = 'Labeled only  ' if labeled_only else 'All  '
+            title += 'Det Rate: {:.2%}  AP: {:.2%}'.format(det_rate, ap)
+            plt.title(title)
+            plt.show()
+        except:
+            print '{} detection:'.format('labeled only' if labeled_only else
+                                         'all')
+            print '  recall = {:.2%}'.format(det_rate)
+            print '  ap = {:.2%}'.format(ap)
 
     def evaluate_search(self, gallery_det, gallery_feat, probe_feat,
                         det_thresh=0.5, gallery_size=100):
@@ -267,13 +285,15 @@ class psdb(imdb):
             # 3. Compute AP for this probe (need to scale by recall rate)
             assert count_tp <= count_gt
             recall_rate = count_tp * 1.0 / count_gt
-            ap = average_precision_score(y_true, y_score) * recall_rate
-            aps.append(0 if np.isnan(ap) else ap)
+            ap = 0 if count_tp == 0 else \
+                 average_precision_score(y_true, y_score) * recall_rate
+            aps.append(ap)
             maxind = np.argmax(y_score)
             top1_acc.append(y_true[maxind])
 
-        print 'mAP: {:.2%}'.format(np.mean(aps))
-        print 'top-1: {:.2%}'.format(np.mean(top1_acc))
+        print 'search ranking:'
+        print '  mAP = {:.2%}'.format(np.mean(aps))
+        print '  top-1 = {:.2%}'.format(np.mean(top1_acc))
 
     def evaluate_cls(self, detections, pid_ranks, pid_labels,
                      det_thresh=0.5):
@@ -317,7 +337,7 @@ class psdb(imdb):
                     y_true.append(label)
 
         # some statistics
-        print 'Among boxes detection score >= {:.2f}:'.format(det_thresh)
+        print 'classifiction:'
         print '  number of background clutter =', count_bg
         print '  number of unlabeled =', count_ul
         print '  number of labeled =', count_lb
