@@ -2826,10 +2826,10 @@ layer {
   }
 }
 layer {
-  name: "feat"
+  name: "feat_raw"
   type: "InnerProduct"
   bottom: "caffe.Pooling_168"
-  top: "feat"
+  top: "feat_raw"
   param {
     lr_mult: 1
     decay_mult: 1
@@ -2845,6 +2845,28 @@ layer {
     }
     bias_filler {
       type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "feat_bn"
+  type: "BN"
+  bottom: "feat_raw"
+  top: "feat"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
       value: 0
     }
   }

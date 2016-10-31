@@ -1,21 +1,31 @@
 mem_param {
-  optimize_train: false
+  optimize_train: true
   optimize_test: true
+  exclude_blob: "rois"
+  exclude_blob: "feat"
 }
 name: "VGG_ILSVRC_16_layers"
-layer {
-  name: "input-data"
-  type: "Python"
-  top: "data"
-  top: "im_info"
-  top: "gt_boxes"
-  python_param {
-    module: "roi_data_layer.layer"
-    layer: "RoIDataLayer"
-    param_str: "'num_classes': 2"
-  }
+
+input: "data"
+input_shape {
+  dim: 1
+  dim: 3
+  dim: 224
+  dim: 224
 }
 
+input: "im_info"
+input_shape {
+  dim: 1
+  dim: 3
+}
+
+input: "gt_boxes"
+input_shape {
+  dim: 1
+  dim: 1
+  dim: 6
+}
 layer {
   name: "conv1_1"
   type: "Convolution"
@@ -429,51 +439,6 @@ layer {
    reshape_param { shape { dim: 0 dim: 2 dim: -1 dim: 0 } }
 }
 
-layer {
-  name: "rpn-data"
-  type: "Python"
-  bottom: "rpn_cls_score"
-  bottom: "gt_boxes"
-  bottom: "im_info"
-  bottom: "data"
-  top: "rpn_labels"
-  top: "rpn_bbox_targets"
-  top: "rpn_bbox_inside_weights"
-  top: "rpn_bbox_outside_weights"
-  python_param {
-    module: "rpn.anchor_target_layer"
-    layer: "AnchorTargetLayer"
-    param_str: "'feat_stride': 16"
-  }
-}
-
-layer {
-  name: "rpn_loss_cls"
-  type: "SoftmaxWithLoss"
-  bottom: "rpn_cls_score_reshape"
-  bottom: "rpn_labels"
-  propagate_down: 1
-  propagate_down: 0
-  top: "rpn_cls_loss"
-  loss_weight: 1
-  loss_param {
-    ignore_label: -1
-    normalize: true
-  }
-}
-
-layer {
-  name: "rpn_loss_bbox"
-  type: "SmoothL1Loss"
-  bottom: "rpn_bbox_pred"
-  bottom: "rpn_bbox_targets"
-  bottom: "rpn_bbox_inside_weights"
-  bottom: "rpn_bbox_outside_weights"
-  top: "rpn_loss_bbox"
-  loss_weight: 1
-  smooth_l1_loss_param { sigma: 3.0 }
-}
-
 #========= RoI Proposal ============
 
 layer {
@@ -498,7 +463,6 @@ layer {
   bottom: "rpn_bbox_pred"
   bottom: "im_info"
   top: "rpn_rois"
-#  top: "rpn_scores"
   python_param {
     module: "rpn.proposal_layer"
     layer: "ProposalLayer"
@@ -662,16 +626,6 @@ layer {
   }
 }
 layer {
-  name: "loss_bbox"
-  type: "SmoothL1Loss"
-  bottom: "bbox_pred"
-  bottom: "bbox_targets"
-  bottom: "bbox_inside_weights"
-  bottom: "bbox_outside_weights"
-  top: "loss_bbox"
-  loss_weight: 1
-}
-layer {
   name: "pid_score"
   type: "InnerProduct"
   bottom: "feat"
@@ -697,35 +651,16 @@ layer {
   }
 }
 layer {
-  name: "pid_loss"
-  type: "RandomSamplingSoftmaxLoss"
+  name: "pid_prob"
+  type: "Softmax"
   bottom: "pid_score"
-  bottom: "pid_label"
-  top: "pid_loss"
-  propagate_down: 1
-  propagate_down: 0
-  loss_weight: 1
-  loss_param {
-    ignore_label: -1
-    normalize: false
-  }
-  rss_loss_param {
-    random_sampling_num: 100
-    random_sampling_policy: "random"
-  }
-}
-layer {
-  name: "pid_accuracy"
-  type: "Accuracy"
-  bottom: "pid_score"
-  bottom: "pid_label"
-  top: "pid_accuracy"
-  accuracy_param {
-    ignore_label: -1
-  }
+  top: "pid_prob"
 }
 layer {
   name: "silence"
   type: "Silence"
   bottom: "labels"
+  bottom: "bbox_targets"
+  bottom: "bbox_inside_weights"
+  bottom: "bbox_outside_weights"
 }
