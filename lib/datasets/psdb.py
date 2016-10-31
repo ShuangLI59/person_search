@@ -7,6 +7,7 @@ import datasets
 from datasets.imdb import imdb
 from fast_rcnn.config import cfg
 from utils import cython_bbox, pickle, unpickle
+from sklearn.metrics import average_precision_score
 
 
 def _compute_iou(a, b):
@@ -28,6 +29,7 @@ class psdb(imdb):
         self._data_path = osp.join(self._root_dir, 'Image', 'SSM')
         self._classes = ('__background__', 'person')
         self._image_index = self._load_image_set_index()
+        self._probes = self._load_probes()
         self._roidb_handler = self.gt_roidb
         assert osp.isdir(self._root_dir), \
                 "PSDB does not exist: {}".format(self._root_dir)
@@ -187,6 +189,93 @@ class psdb(imdb):
         plt.title('Det Rate: {:.2%}  AP: {:.2%}'.format(det_rate, ap))
         plt.show()
 
+    def evaluate_search(self, gallery_det, gallery_feat, probe_feat,
+                        det_thresh=0.5, gallery_size=100):
+        """
+        gallery_det (list of ndarray): n_det x [x1, x2, y1, y2, score] per image
+        gallery_feat (list of ndarray): n_det x D features per image
+        probe_feat (list of ndarray): D dimensional features per probe image
+
+        det_thresh (float): filter out gallery detections whose scores below this
+        gallery_size (int): gallery size [-1, 50, 100, 500, 1000, 2000, 4000]
+                            -1 for using full set
+        """
+        assert self.num_images == len(gallery_det)
+        assert self.num_images == len(gallery_feat)
+        assert len(self.probes) == len(probe_feat)
+
+        # TODO: support evaluation on training split
+        use_full_set = gallery_size == -1
+        fname = 'TestG{}'.format(gallery_size if not use_full_set else 50)
+        protoc = loadmat(osp.join(self._root_dir, 'annotation/test/train_test',
+                                  fname + '.mat'))[fname].squeeze()
+
+        # mapping from gallery image to (det, feat)
+        name_to_det_feat = {}
+        for name, det, feat in zip(self._image_index,
+                                   gallery_det, gallery_feat):
+            scores = det[:, 4].ravel()
+            inds = np.where(scores >= det_thresh)[0]
+            if len(inds) > 0:
+                name_to_det_feat[name] = (det[inds], feat[inds])
+
+        aps = []
+        top1_acc = []
+        for i in xrange(len(self.probes)):
+            y_true, y_score = [], []
+            count_gt, count_tp = 0, 0
+            feat_p = probe_feat[i][np.newaxis, :]
+            # 1. Go through the gallery samples defined by the protocol
+            tested = set([str(protoc['Query'][i]['imname'][0,0][0])])
+            for item in protoc['Gallery'][i].squeeze():
+                gallery_imname = str(item[0][0])
+                # some contain the probe (gt not empty), some not
+                gt = item[1][0].astype(np.int32)
+                count_gt += (gt.size > 0)
+                # compute distance between probe and gallery dets
+                if gallery_imname not in name_to_det_feat: continue
+                det, feat_g = name_to_det_feat[gallery_imname]
+                dis = np.sum((feat_p - feat_g) ** 2, axis=1)
+                # assign label for each det
+                label = np.zeros(len(dis), dtype=np.int32)
+                if gt.size > 0:
+                    w, h = gt[2], gt[3]
+                    gt[2:] += gt[:2]
+                    iou_thresh = min(0.5, (w * h * 1.0) / ((w + 10) * (h + 10)))
+                    inds = np.argsort(dis)
+                    dis = dis[inds]
+                    # only set the first matched det as true positive
+                    for j, roi in enumerate(det[inds, :4]):
+                        if _compute_iou(roi, gt) >= iou_thresh:
+                            label[j] = 1
+                            count_tp += 1
+                            break
+                y_true.extend(list(label))
+                y_score.extend(list(-dis))
+                tested.add(gallery_imname)
+            # 2. Go through the remaining gallery images if using full set
+            if use_full_set:
+                for gallery_imname in self._image_index:
+                    if gallery_imname in tested: continue
+                    if gallery_imname not in name_to_det_feat: continue
+                    det, feat_g = name_to_det_feat[gallery_imname]
+                    dis = np.sum((feat_p - feat_g) ** 2, axis=1)
+                    # guaranteed no target probe in these gallery images
+                    label = np.zeros(len(dis), dtype=np.int32)
+                    y_true.extend(list(label))
+                    y_score.extend(list(-dis))
+            # 3. Compute AP for this probe (need to scale by recall rate)
+            assert count_tp <= count_gt
+            recall_rate = count_tp * 1.0 / count_gt
+            ap = average_precision_score(y_true, y_score) * recall_rate
+            aps.append(0 if np.isnan(ap) else ap)
+            maxind = np.argmax(y_score)
+            top1_acc.append(y_true[maxind])
+
+        print 'mAP: {:.2%}'.format(np.mean(aps))
+        print 'top-1: {:.2%}'.format(np.mean(top1_acc))
+
+
     def _get_default_path(self):
         return osp.join(cfg.DATA_DIR, 'psdb', 'dataset')
 
@@ -206,6 +295,22 @@ class psdb(imdb):
         all_imgs = [str(a[0][0]) for a in all_imgs]
         # training
         return list(set(all_imgs) - set(test))
+
+    def _load_probes(self):
+        """
+        Load the list of (img, roi) for probes. For test split, it's defined
+        by the protocol. For training split, will randomly choose some samples
+        from the gallery as probes.
+        """
+        protoc = loadmat(osp.join(self._root_dir,
+            'annotation/test/train_test/TestG50.mat'))['TestG50'].squeeze()
+        probes = []
+        for item in protoc['Query']:
+            im_name = osp.join(self._data_path, str(item['imname'][0,0][0]))
+            roi = item['idlocate'][0,0][0].astype(np.int32)
+            roi[2:] += roi[:2]
+            probes.append((im_name, roi))
+        return probes
 
 
 if __name__ == '__main__':

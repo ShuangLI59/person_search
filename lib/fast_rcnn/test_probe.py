@@ -45,10 +45,8 @@ def _im_exfeat(net, im, roi, blob_names):
     return features
 
 
-def exfeat(net, images, rois,
+def exfeat(net, probes,
            start=None, end=None, blob_names=None):
-    assert len(rois) == len(images), "Must have equal number of images and rois"
-
     start = start or 0
     end = end or len(images)
     num_images = end - start
@@ -62,9 +60,9 @@ def exfeat(net, images, rois,
     _t = {'im_exfeat' : Timer(), 'misc' : Timer()}
 
     for i in xrange(num_images):
-        im_index = start + i
-        im = cv2.imread(images[im_index])
-        roi = rois[im_index].reshape(1, 4)
+        im_name, roi = probes[start + i]
+        im = cv2.imread(im_name)
+        roi = roi.reshape(1, 4)
 
         _t['im_exfeat'].tic()
         feat_dic = _im_exfeat(net, im, roi, blob_names)
