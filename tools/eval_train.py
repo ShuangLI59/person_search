@@ -51,40 +51,53 @@ def main(args):
     imdb = get_imdb(args.imdb_name)
     root_dir = imdb._root_dir
     images_dir = imdb._data_path
+    output_dir = get_output_dir(imdb.name,
+                                osp.splitext(osp.basename(args.caffemodel))[0])
 
-    # setup caffe
-    caffe.mpi_init()
-    caffe.set_mode_gpu()
-    caffe.set_device(cfg.GPU_ID)
+    if args.eval_only:
+        def _load(fname):
+            fpath = osp.join(output_dir, fname)
+            assert osp.isfile(fpath), "Must have extracted detections and " \
+                                      "features first before evaluation"
+            return unpickle(fpath)
+        if mpi_rank == 0:
+            gboxes = _load('gallery_detections.pkl')
+            gfeatures = _load('gallery_features.pkl')
+    else:
+        # setup caffe
+        caffe.mpi_init()
+        caffe.set_mode_gpu()
+        caffe.set_device(cfg.GPU_ID)
 
-    # 1. Detect and extract features from all the gallery images in the imdb
-    start, end = mpi_dispatch(len(imdb.image_index), mpi_size, mpi_rank)
-    net = caffe.Net(args.prototxt, args.caffemodel, caffe.TEST)
-    net.name = osp.splitext(osp.basename(args.caffemodel))[0]
-    gboxes, gfeatures = detect_and_exfeat(net, imdb,
-        start=start, end=end, blob_names=blob_names, vis=args.vis)
-    # pid_prob could be very large, so we change it to top-100 ranked pids
-    if 'pid_prob' in gfeatures:
-        ranks = []
-        for p in gfeatures['pid_prob']:
-            r = np.argsort(p, axis=1)[:, ::-1]
-            r = r[:, :min(100, r.shape[1])]
-            ranks.append(r)
-        del gfeatures['pid_prob']
-        gfeatures['pid_rank'] = ranks
+        # 1. Detect and extract features from all the gallery images in the imdb
+        start, end = mpi_dispatch(len(imdb.image_index), mpi_size, mpi_rank)
+        net = caffe.Net(args.prototxt, args.caffemodel, caffe.TEST)
+        gboxes, gfeatures = detect_and_exfeat(net, imdb,
+            start=start, end=end, blob_names=blob_names, vis=args.vis)
+        # pid_prob could be very large, so we change it to top-100 ranked pids
+        if 'pid_prob' in gfeatures:
+            ranks = []
+            for p in gfeatures['pid_prob']:
+                r = np.argsort(p, axis=1)[:, ::-1]
+                r = r[:, :min(100, r.shape[1])]
+                ranks.append(r)
+            del gfeatures['pid_prob']
+            gfeatures['pid_rank'] = ranks
+        gboxes = mpi_collect(mpi_comm, mpi_rank, gboxes)
+        gfeatures = mpi_collect(mpi_comm, mpi_rank, gfeatures)
+        del net
 
-    gboxes = mpi_collect(mpi_comm, mpi_rank, gboxes)
-    gfeatures = mpi_collect(mpi_comm, mpi_rank, gfeatures)
+        # Save
+        if mpi_rank == 0:
+            pickle(gboxes, osp.join(output_dir, 'gallery_detections.pkl'))
+            pickle(gfeatures, osp.join(output_dir, 'gallery_features.pkl'))
+
+        caffe.mpi_finalize()
 
     # Evaluate
     if mpi_rank == 0:
-        output_dir = get_output_dir(imdb, net)
-        pickle(gboxes, osp.join(output_dir, 'gallery_detections.pkl'))
-        pickle(gfeatures, osp.join(output_dir, 'gallery_features.pkl'))
         imdb.evaluate_cls(gboxes, gfeatures['pid_rank'], gfeatures['pid_label'],
                           args.det_thresh)
-
-    caffe.mpi_finalize()
 
 
 if __name__ == '__main__':
@@ -107,6 +120,9 @@ if __name__ == '__main__':
     parser.add_argument('--det_thresh',
                         help="detection score threshold to be evaluated",
                         type=float, default=0.5)
+    parser.add_argument('--eval_only',
+                        help='skip the feature extraction and only do eval',
+                        action='store_true')
     parser.add_argument('--wait',
                         help='wait until net file exists',
                         default=True, type=bool)
