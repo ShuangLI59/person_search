@@ -36,7 +36,7 @@ def _im_detect(net, im, roidb, blob_names=None):
     if 'gt_boxes' in net.blobs:
         # Supply gt_boxes as input. Used to get pid_labels for proposals.
         blobs['gt_boxes'] = get_gt_boxes_blob(
-            roidb['boxes'], roidb['gt_pids'], im_scales)
+            roidb['boxes'], roidb['gt_classes'], roidb['gt_pids'], im_scales)
 
     # reshape network inputs
     for k, v in blobs.iteritems():
@@ -143,9 +143,9 @@ def detect_and_exfeat(net, imdb,
         cls_dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])) \
             .astype(np.float32, copy=False)
         keep = nms(cls_dets, cfg.TEST.NMS)
-        all_boxes[i] = cls_dets[keep, :]
+        all_boxes[i] = cls_dets[keep]
         for blob, feat in feat_dic.iteritems():
-            all_features[blob][i] = feat[keep, :]
+            all_features[blob][i] = feat[keep]
         _t['misc'].toc()
 
         print 'im_detect: {:d}/{:d} {:.3f}s {:.3f}s'.format(i + 1, num_images,

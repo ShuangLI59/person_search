@@ -57,10 +57,10 @@ def get_rois_blob(im_rois, im_scale_factors):
     return rois_blob.astype(np.float32, copy=False)
 
 
-def get_gt_boxes_blob(boxes, pids, im_scale_factors):
+def get_gt_boxes_blob(boxes, clss, pids, im_scale_factors):
     assert boxes.shape[0] == pids.shape[0]
     gt_boxes = boxes * im_scale_factors[0]
-    gt_boxes = np.hstack([gt_boxes, pids[:, np.newaxis]])
+    gt_boxes = np.hstack([gt_boxes, clss[:, np.newaxis], pids[:, np.newaxis]])
     return gt_boxes.astype(np.float32, copy=False)
 
 

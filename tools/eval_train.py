@@ -59,60 +59,54 @@ def main(args):
 
     # 1. Detect and extract features from all the gallery images in the imdb
     start, end = mpi_dispatch(len(imdb.image_index), mpi_size, mpi_rank)
-    net = caffe.Net(args.gallery_def, args.caffemodel, caffe.TEST)
+    net = caffe.Net(args.prototxt, args.caffemodel, caffe.TEST)
     net.name = osp.splitext(osp.basename(args.caffemodel))[0]
     gboxes, gfeatures = detect_and_exfeat(net, imdb,
         start=start, end=end, blob_names=blob_names, vis=args.vis)
+    # pid_prob could be very large, so we change it to top-100 ranked pids
+    if 'pid_prob' in gfeatures:
+        ranks = []
+        for p in gfeatures['pid_prob']:
+            r = np.argsort(p, axis=1)[:, ::-1]
+            r = r[:, :min(100, r.shape[1])]
+            ranks.append(r)
+        del gfeatures['pid_prob']
+        gfeatures['pid_rank'] = ranks
+
     gboxes = mpi_collect(mpi_comm, mpi_rank, gboxes)
     gfeatures = mpi_collect(mpi_comm, mpi_rank, gfeatures)
-    del net # to release the cudnn conv static workspace
-
-    # 2. Only extract features from given probe rois
-    start, end = mpi_dispatch(len(imdb.probes), mpi_size, mpi_rank)
-    net = caffe.Net(args.probe_def, args.caffemodel, caffe.TEST)
-    net.name = os.path.splitext(osp.basename(args.caffemodel))[0]
-    pfeatures = exfeat(net, imdb.probes,
-        start=start, end=end, blob_names=blob_names)
-    pfeatures = mpi_collect(mpi_comm, mpi_rank, pfeatures)
 
     # Evaluate
     if mpi_rank == 0:
         output_dir = get_output_dir(imdb, net)
         pickle(gboxes, osp.join(output_dir, 'gallery_detections.pkl'))
         pickle(gfeatures, osp.join(output_dir, 'gallery_features.pkl'))
-        pickle(pfeatures, osp.join(output_dir, 'probe_features.pkl'))
-        imdb.evaluate_search(gboxes, gfeatures['feat'], pfeatures['feat'],
-                             args.det_thresh, args.gallery_size)
+        imdb.evaluate_cls(gboxes, gfeatures['pid_rank'], gfeatures['pid_label'],
+                          args.det_thresh)
 
     caffe.mpi_finalize()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Evalute on test set, including search ranking accuracy')
+        description='Evalute on training set, including classification accuracy')
     parser.add_argument('--gpus',
                         help='comma separated GPU device ids',
                         default='0')
     parser.add_argument('--imdb', dest='imdb_name',
                         help='dataset to test',
-                        default='psdb_test')
-    parser.add_argument('--gallery_def',
-                        help='prototxt file defining the gallery network')
-    parser.add_argument('--probe_def',
-                        help='prototxt file defining the probe network')
+                        default='psdb_train')
+    parser.add_argument('--def', dest='prototxt',
+                        help='prototxt file defining the network')
     parser.add_argument('--net', dest='caffemodel',
                         help='model to test')
     parser.add_argument('--blob_names',
                         help='comma separated names of the feature blobs ' \
                              'to be extracted',
-                        default='feat')
+                        default='feat,pid_label,pid_prob')
     parser.add_argument('--det_thresh',
                         help="detection score threshold to be evaluated",
                         type=float, default=0.5)
-    parser.add_argument('--gallery_size',
-                        help='gallery size for evaluation, -1 for full set',
-                        type=int, default=100,
-                        choices=[-1, 50, 100, 500, 1000, 2000, 4000])
     parser.add_argument('--wait',
                         help='wait until net file exists',
                         default=True, type=bool)

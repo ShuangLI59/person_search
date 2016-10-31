@@ -109,11 +109,11 @@ class psdb(imdb):
 
         # Construct the gt_roidb
         gt_roidb = []
-        for index in self.image_index:
-            boxes = name_to_boxes[index]
+        for im_name in self.image_index:
+            boxes = name_to_boxes[im_name]
             boxes[:, 2] += boxes[:, 0]
             boxes[:, 3] += boxes[:, 1]
-            pids = name_to_pids[index]
+            pids = name_to_pids[im_name]
             num_objs = len(boxes)
             gt_classes = np.ones((num_objs), dtype=np.int32)
             overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
@@ -274,6 +274,59 @@ class psdb(imdb):
 
         print 'mAP: {:.2%}'.format(np.mean(aps))
         print 'top-1: {:.2%}'.format(np.mean(top1_acc))
+
+    def evaluate_cls(self, detections, pid_ranks, pid_labels,
+                     det_thresh=0.5):
+        """
+        detections (list of ndarray): n_det x [x1, x2, y1, y2, score] per image
+        pid_ranks (list of ndarray): n_det x top_k cls scores per image
+        pid_labels (list of ndarray): n_det x 1 ground truth identities
+
+        det_thresh (float): filter out gallery detections whose scores below this
+        """
+        assert len(detections) == len(pid_ranks)
+        assert len(detections) == len(pid_labels)
+
+        # Get the num of identities in the imdb
+        gt_roidb = self.gt_roidb()
+        max_pid = 0
+        for item in gt_roidb:
+            max_pid = max(max_pid, max(item['gt_pids']))
+
+        # In the extracted pid_labels:
+        #   -1 for unlabeled person,
+        #   {0, 1, ..., max_pid-1} for labeled person
+        #   max_pid for background clutter
+        count_ul, count_lb, count_bg = 0, 0, 0
+        y_pred, y_true = [], []
+        for dets, ranks, labels in zip(detections, pid_ranks, pid_labels):
+            assert len(dets) == len(ranks)
+            assert len(dets) == len(labels)
+            for det, rank, label in zip(dets, ranks, labels):
+                if det[-1] < det_thresh: continue
+                label = int(round(label))
+                if label == -1:
+                    count_ul += 1
+                    continue
+                elif label == max_pid:
+                    count_bg += 1
+                    continue
+                else:
+                    count_lb += 1
+                    y_pred.append(rank)
+                    y_true.append(label)
+
+        # some statistics
+        print 'Among boxes detection score >= {:.2f}:'.format(det_thresh)
+        print '  number of background clutter =', count_bg
+        print '  number of unlabeled =', count_ul
+        print '  number of labeled =', count_lb
+
+        # top-k classification accuracies
+        correct = np.asarray(y_pred) == np.asarray(y_true)[:, np.newaxis]
+        for top_k in [1, 5, 10]:
+            acc = correct[:, :top_k].sum(axis=1).mean()
+            print '  top-{} accuracy = {:.2%}'.format(top_k, acc)
 
 
     def _get_default_path(self):
