@@ -25,7 +25,7 @@ case $DATASET in
     TRAIN_IMDB="psdb_train"
     TEST_IMDB="psdb_test"
     PT_DIR="psdb"
-    ITERS=100000
+    ITERS=50000
     ;;
   *)
     echo "No dataset given"
@@ -42,17 +42,10 @@ time python2 tools/train_net.py --gpu ${GPU_ID} \
   --weights output/${DATASET}_pretrain/${NET}_iter_50000.caffemodel \
   --imdb ${TRAIN_IMDB} \
   --iters ${ITERS} \
-  --cfg experiments/cfgs/train.yml \
+  --cfg experiments/cfgs/train_vgg16.yml \
+  --rand \
   ${EXTRA_ARGS}
 
 set +x
 NET_FINAL=`grep -B 1 "done solving" ${LOG} | grep "Wrote snapshot" | awk '{print $4}'`
 set -x
-
-time python2 tools/test_net.py --gpu ${GPU_ID} \
-  --gallery_def models/${PT_DIR}/${NET}/test_gallery.prototxt \
-  --probe_def models/${PT_DIR}/${NET}/test_probe.prototxt \
-  --net ${NET_FINAL} \
-  --imdb ${TEST_IMDB} \
-  --cfg experiments/cfgs/train.yml \
-  ${EXTRA_ARGS}

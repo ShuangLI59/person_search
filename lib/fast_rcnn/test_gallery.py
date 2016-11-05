@@ -56,8 +56,8 @@ def _im_detect(net, im, roidb, blob_names=None):
         # were trained as linear SVMs
         scores = net.blobs['cls_score'].data
     else:
-        # the last column of the pid_prob is the non-person box score
-        scores = blobs_out['pid_prob'][:, -1]
+        # the first column of the pid_prob is the non-person box score
+        scores = blobs_out['pid_prob'][:, 0]
         scores = scores[:, np.newaxis]
         scores = np.hstack([scores, 1. - scores])
 

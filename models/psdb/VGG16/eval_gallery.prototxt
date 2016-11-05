@@ -1,6 +1,6 @@
 mem_param {
-  optimize_train: true
-  optimize_test: true
+  optimize_train: false
+  optimize_test: false
   exclude_blob: "rois"
   exclude_blob: "feat"
 }
@@ -622,20 +622,20 @@ layer {
   }
 }
 layer {
-  name: "pid_score"
+  name: "det_score"
   type: "InnerProduct"
   bottom: "feat"
-  top: "pid_score"
+  top: "det_score"
   param {
     lr_mult: 1
-    decay_mult: 0
+    decay_mult: 1
   }
   param {
     lr_mult: 2
     decay_mult: 0
   }
   inner_product_param {
-    num_output: 5533
+    num_output: 2
     weight_filler {
       type: "gaussian"
       std: 0.001
@@ -649,6 +649,6 @@ layer {
 layer {
   name: "pid_prob"
   type: "Softmax"
-  bottom: "pid_score"
+  bottom: "det_score"
   top: "pid_prob"
 }

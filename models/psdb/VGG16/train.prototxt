@@ -1,6 +1,6 @@
 mem_param {
   optimize_train: false
-  optimize_test: true
+  optimize_test: false
 }
 name: "VGG_ILSVRC_16_layers"
 layer {
@@ -638,6 +638,52 @@ layer {
     dropout_ratio: 0.5
   }
 }
+
+################### Detection ###################
+layer {
+  name: "det_score"
+  type: "InnerProduct"
+  bottom: "feat"
+  top: "det_score"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "det_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "det_score"
+  bottom: "labels"
+  propagate_down: 1
+  propagate_down: 0
+  top: "det_loss"
+  loss_weight: 1
+}
+layer {
+  name: "det_accuracy"
+  type: "Accuracy"
+  bottom: "det_score"
+  bottom: "labels"
+  top: "det_accuracy"
+}
+
+################### BBox Regression ###################
 layer {
   name: "bbox_pred"
   type: "InnerProduct"
@@ -671,61 +717,57 @@ layer {
   top: "loss_bbox"
   loss_weight: 1
 }
+
+################### Identification ###################
 layer {
-  name: "pid_score"
-  type: "InnerProduct"
+  name: "id_loss"
+  type: "HybridSoftmaxLoss"
   bottom: "feat"
-  top: "pid_score"
-  param {
-    lr_mult: 1
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 2
-    decay_mult: 0
-  }
-  inner_product_param {
-    num_output: 5533
-    weight_filler {
-      type: "gaussian"
-      std: 0.001
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-layer {
-  name: "pid_loss"
-  type: "RandomSamplingSoftmaxLoss"
-  bottom: "pid_score"
   bottom: "pid_label"
-  top: "pid_loss"
+  top: "id_loss_sub"
   propagate_down: 1
   propagate_down: 0
-  loss_weight: 1
-  loss_param {
-    ignore_label: -1
-    normalize: false
+  param {
+    name: "W_id"
+    lr_mult: 1
+    decay_mult: 0
   }
-  rss_loss_param {
+  loss_weight: 1
+  hybrid_softmax_loss_param {
+    num_classes: 5532
+    unlabeled_pool_size: 1000
+    unlabeled_score_weight: 0.0001
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
     random_sampling_num: 100
     random_sampling_policy: "random"
   }
 }
 layer {
-  name: "pid_accuracy"
-  type: "Accuracy"
-  bottom: "pid_score"
+  name: "id_loss"
+  type: "HybridSoftmaxLoss"
+  bottom: "feat"
   bottom: "pid_label"
-  top: "pid_accuracy"
-  accuracy_param {
-    ignore_label: -1
+  top: "id_loss"
+  propagate_down: 0
+  propagate_down: 0
+  param {
+    name: "W_id"
+    lr_mult: 0
+    decay_mult: 0
   }
-}
-layer {
-  name: "silence"
-  type: "Silence"
-  bottom: "labels"
+  loss_weight: 0
+  hybrid_softmax_loss_param {
+    num_classes: 5532
+    unlabeled_pool_size: 1000
+    unlabeled_score_weight: 0
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    random_sampling_num: 5532
+    random_sampling_policy: "random"
+  }
 }
