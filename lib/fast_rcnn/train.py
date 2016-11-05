@@ -7,15 +7,18 @@
 
 """Train a Fast R-CNN network."""
 
+import os
+import tempfile
+
+import numpy as np
+import google.protobuf as pb2
 import caffe
-from fast_rcnn.config import cfg
+from caffe.proto import caffe_pb2
+
 import roi_data_layer.roidb as rdl_roidb
 from utils.timer import Timer
-import numpy as np
-import os
+from fast_rcnn.config import cfg
 
-from caffe.proto import caffe_pb2
-import google.protobuf as pb2
 
 class SolverWrapper(object):
     """A simple wrapper around Caffe's solver.
@@ -40,6 +43,21 @@ class SolverWrapper(object):
                     rdl_roidb.add_bbox_regression_targets(roidb)
             print 'done'
 
+        # Change the snapshot file name
+        self.solver_param = caffe_pb2.SolverParameter()
+        with open(solver_prototxt, 'rt') as f:
+            pb2.text_format.Merge(f.read(), self.solver_param)
+        infix = ('_' + cfg.TRAIN.SNAPSHOT_INFIX) \
+                if cfg.TRAIN.SNAPSHOT_INFIX != '' else ''
+        filename = self.solver_param.snapshot_prefix + infix
+        filename = os.path.join(self.output_dir, filename)
+        self.solver_param.snapshot_prefix = filename
+        print 'Change the snapshot prefix to', self.solver_param.snapshot_prefix
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(str(self.solver_param))
+            solver_prototxt = f.name
+            print 'Create temporary solver prototxt at', solver_prototxt
+
         self.solver = caffe.SGDSolver(solver_prototxt)
         if previous_state is not None:
             print ('Restoring solver state from {:s}').format(previous_state)
@@ -48,10 +66,6 @@ class SolverWrapper(object):
             print ('Loading pretrained model '
                    'weights from {:s}').format(pretrained_model)
             self.solver.net.copy_from(pretrained_model)
-
-        self.solver_param = caffe_pb2.SolverParameter()
-        with open(solver_prototxt, 'rt') as f:
-            pb2.text_format.Merge(f.read(), self.solver_param)
 
         self.solver.net.layers[0].set_roidb(roidb)
 
