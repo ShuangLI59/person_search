@@ -58,15 +58,6 @@ class SolverWrapper(object):
             solver_prototxt = f.name
             print 'Create temporary solver prototxt at', solver_prototxt
 
-        #! Hack here to copy the classifier from the pretrained model
-        if pretrained_model is not None:
-            folder = str(os.path.dirname(self.solver_param.train_net))
-            pretrained_net = caffe.Net(os.path.join(folder, 'pretrain.prototxt'),
-                                       pretrained_model, caffe.TEST)
-            W = pretrained_net.params['pid_score'][0].data.copy()
-            W = W[:-1]
-            del pretrained_net
-
         self.solver = caffe.SGDSolver(solver_prototxt)
         if previous_state is not None:
             print ('Restoring solver state from {:s}').format(previous_state)
@@ -75,18 +66,24 @@ class SolverWrapper(object):
             print ('Loading pretrained model '
                    'weights from {:s}').format(pretrained_model)
             self.solver.net.copy_from(pretrained_model)
-            #! Hack
-            V = self.solver.net.params['id_loss'][0].data
-            assert V.shape[0] >= W.shape[0]
-            assert V.shape[1] == W.shape[1]
-            V[:W.shape[0], :] = W
-            print 'Copy original pid_score params to id_loss'
 
         self.solver.net.layers[0].set_roidb(roidb)
 
     def train_model(self, max_iters):
         """Network training loop."""
         self.solver.step(max_iters)
+        # import pdb
+        # net = self.solver.net
+        # def d(blob):
+        #     return np.abs(net.blobs[blob].diff).mean()
+        # while self.solver.iter < max_iters:
+        #     self.solver.step(1)
+        #     print 'fc7 <- det  diff = {:.8f}'.format(d('fc7_drop7_0_split_0'))
+        #     print 'fc7 <- bbox diff = {:.8f}'.format(d('fc7_drop7_0_split_1'))
+        #     print 'fc7 <- id   diff = {:.8f}'.format(d('fc7_drop7_0_split_2'))
+        #     print 'feat <- lb  diff = {:.8f}'.format(d('feat_feat_0_split_0'))
+        #     print 'feat <- ul  diff = {:.8f}'.format(d('feat_feat_0_split_1'))
+        #     pdb.set_trace()
 
 def get_training_roidb(imdb):
     """Returns a roidb (Region of Interest database) for use in training."""

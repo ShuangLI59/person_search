@@ -39,7 +39,7 @@ echo Logging output to "$LOG"
 
 time python2 tools/train_net.py --gpu ${GPU_ID} \
   --solver models/${PT_DIR}/${NET}/solver.prototxt \
-  --weights output/${DATASET}_pretrain/${NET}_iter_50000.caffemodel \
+  --weights data/imagenet_models/${NET}.v2.caffemodel \
   --imdb ${TRAIN_IMDB} \
   --iters ${ITERS} \
   --cfg experiments/cfgs/train_vgg16.yml \

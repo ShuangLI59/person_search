@@ -473,75 +473,13 @@ layer {
     dropout_ratio: 0.5
   }
 }
-layer {
-  name: "feat"
-  type: "InnerProduct"
-  bottom: "fc7"
-  top: "feat"
-  param {
-    lr_mult: 1
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 2
-    decay_mult: 0
-  }
-  inner_product_param {
-    num_output: 256
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-layer {
-  name: "relu8"
-  type: "ReLU"
-  bottom: "feat"
-  top: "feat"
-}
-layer {
-  name: "drop8"
-  type: "Dropout"
-  bottom: "feat"
-  top: "feat"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
-layer {
-  name: "bbox_pred"
-  type: "InnerProduct"
-  bottom: "fc7"
-  top: "bbox_pred"
-  param {
-    lr_mult: 1
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 2
-    decay_mult: 0
-  }
-  inner_product_param {
-    num_output: 8
-    weight_filler {
-      type: "gaussian"
-      std: 0.001
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
+
+
+#================================== detection ==================================
 layer {
   name: "det_score"
   type: "InnerProduct"
-  bottom: "feat"
+  bottom: "fc7"
   top: "det_score"
   param {
     lr_mult: 1
@@ -568,4 +506,39 @@ layer {
   type: "Softmax"
   bottom: "det_score"
   top: "pid_prob"
+}
+
+
+#================================== bbox regression ==================================
+layer {
+  name: "bbox_pred"
+  type: "InnerProduct"
+  bottom: "fc7"
+  top: "bbox_pred"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  inner_product_param {
+    num_output: 8
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+
+#================================== identification ==================================
+layer {
+  name: "feat"
+  type: "Normalize"
+  bottom: "fc7"
+  top: "feat"
 }

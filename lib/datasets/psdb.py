@@ -231,6 +231,7 @@ class psdb(imdb):
             y_true, y_score = [], []
             count_gt, count_tp = 0, 0
             feat_p = probe_feat[i][np.newaxis, :]
+            feat_p /= np.linalg.norm(feat_p, axis=1)[:, np.newaxis]
             # 1. Go through the gallery samples defined by the protocol
             tested = set([str(protoc['Query'][i]['imname'][0,0][0])])
             for item in protoc['Gallery'][i].squeeze():
@@ -241,7 +242,8 @@ class psdb(imdb):
                 # compute distance between probe and gallery dets
                 if gallery_imname not in name_to_det_feat: continue
                 det, feat_g = name_to_det_feat[gallery_imname]
-                dis = np.sum((feat_p - feat_g) ** 2, axis=1)
+                feat_g /= np.linalg.norm(feat_g, axis=1)[:, np.newaxis]
+                dis = -feat_g.dot(feat_p.ravel())
                 # assign label for each det
                 label = np.zeros(len(dis), dtype=np.int32)
                 if gt.size > 0:
@@ -265,7 +267,8 @@ class psdb(imdb):
                     if gallery_imname in tested: continue
                     if gallery_imname not in name_to_det_feat: continue
                     det, feat_g = name_to_det_feat[gallery_imname]
-                    dis = np.sum((feat_p - feat_g) ** 2, axis=1)
+                    feat_g /= np.linalg.norm(feat_g, axis=1)[:, np.newaxis]
+                    dis = -feat_g.dot(feat_p.ravel())
                     # guaranteed no target probe in these gallery images
                     label = np.zeros(len(dis), dtype=np.int32)
                     y_true.extend(list(label))

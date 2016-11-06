@@ -1,6 +1,6 @@
 mem_param {
   optimize_train: false
-  optimize_test: false
+  optimize_test: true
 }
 name: "VGG_ILSVRC_16_layers"
 layer {
@@ -368,7 +368,7 @@ layer {
   top: "conv5_3"
 }
 
-#========= RPN ============
+#================================== RPN ==================================
 
 layer {
   name: "rpn_conv/3x3"
@@ -474,7 +474,7 @@ layer {
   smooth_l1_loss_param { sigma: 3.0 }
 }
 
-#========= RoI Proposal ============
+#================================== RoI Proposal ==================================
 
 layer {
   name: "rpn_cls_prob"
@@ -524,7 +524,7 @@ layer {
   }
 }
 
-#========= RCNN ============
+#================================== RCNN ==================================
 
 layer {
   name: "roi_pool5"
@@ -598,52 +598,13 @@ layer {
     dropout_ratio: 0.5
   }
 }
-layer {
-  name: "feat"
-  type: "InnerProduct"
-  bottom: "fc7"
-  top: "feat"
-  param {
-    lr_mult: 1
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 2
-    decay_mult: 0
-  }
-  inner_product_param {
-    num_output: 256
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-layer {
-  name: "relu8"
-  type: "ReLU"
-  bottom: "feat"
-  top: "feat"
-}
-layer {
-  name: "drop8"
-  type: "Dropout"
-  bottom: "feat"
-  top: "feat"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
 
-################### Detection ###################
+
+#================================== detection ==================================
 layer {
   name: "det_score"
   type: "InnerProduct"
-  bottom: "feat"
+  bottom: "fc7"
   top: "det_score"
   param {
     lr_mult: 1
@@ -666,24 +627,32 @@ layer {
   }
 }
 layer {
-  name: "det_loss"
-  type: "SoftmaxWithLoss"
-  bottom: "det_score"
-  bottom: "labels"
-  propagate_down: 1
-  propagate_down: 0
-  top: "det_loss"
-  loss_weight: 1
-}
-layer {
   name: "det_accuracy"
   type: "Accuracy"
   bottom: "det_score"
   bottom: "labels"
   top: "det_accuracy"
+  accuracy_param {
+    ignore_label: -1
+  }
+}
+layer {
+  name: "det_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "det_score"
+  bottom: "labels"
+  top: "det_loss"
+  propagate_down: 1
+  propagate_down: 0
+  loss_weight: 1
+  loss_param {
+    ignore_label: -1
+    normalize: true
+  }
 }
 
-################### BBox Regression ###################
+
+#================================== bbox regression ==================================
 layer {
   name: "bbox_pred"
   type: "InnerProduct"
@@ -718,56 +687,89 @@ layer {
   loss_weight: 1
 }
 
-################### Identification ###################
+
+#================================== identification ==================================
 layer {
-  name: "id_loss"
-  type: "HybridSoftmaxLoss"
+  name: "feat"
+  type: "Normalize"
+  bottom: "fc7"
+  top: "feat"
+}
+layer {
+  name: "labeled_matching"
+  type: "LabeledMatching"
   bottom: "feat"
   bottom: "pid_label"
-  top: "id_loss_sub"
-  propagate_down: 1
-  propagate_down: 0
+  top: "labeled_matching_scores"
+  top: "id_labels"
   param {
-    name: "W_id"
     lr_mult: 1
     decay_mult: 0
   }
-  loss_weight: 1
-  hybrid_softmax_loss_param {
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  labeled_matching_param {
     num_classes: 5532
-    unlabeled_pool_size: 1000
-    unlabeled_score_weight: 0.0001
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    random_sampling_num: 100
-    random_sampling_policy: "random"
+    momentum: 0.5
+  }
+}
+layer {
+  name: "sampling"
+  type: "TargetSampling"
+  bottom: "labeled_matching_scores"
+  bottom: "id_labels"
+  top: "labeled_matching_scores_sampled"
+  top: "id_labels_sampled"
+  propagate_down: 1
+  propagate_down: 0
+  target_sampling_param {
+    num_sampling: 100
+  }
+}
+layer {
+  name: "unlabeled_matching"
+  type: "UnlabeledMatching"
+  bottom: "feat"
+  bottom: "pid_label"
+  top: "unlabeled_matching_scores"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  unlabeled_matching_param {
+    queue_size: 1000
+  }
+}
+layer {
+  name: "concat"
+  type: "Concat"
+  bottom: "labeled_matching_scores_sampled"
+  bottom: "unlabeled_matching_scores"
+  top: "id_scores_sampled"
+}
+layer {
+  name: "id_accuracy"
+  type: "Accuracy"
+  bottom: "id_scores_sampled"
+  bottom: "id_labels_sampled"
+  top: "id_accuracy"
+  accuracy_param {
+    ignore_label: -1
   }
 }
 layer {
   name: "id_loss"
-  type: "HybridSoftmaxLoss"
-  bottom: "feat"
-  bottom: "pid_label"
+  type: "SoftmaxWithLoss"
+  bottom: "id_scores_sampled"
+  bottom: "id_labels_sampled"
   top: "id_loss"
+  propagate_down: 1
   propagate_down: 0
-  propagate_down: 0
-  param {
-    name: "W_id"
-    lr_mult: 0
-    decay_mult: 0
-  }
-  loss_weight: 0
-  hybrid_softmax_loss_param {
-    num_classes: 5532
-    unlabeled_pool_size: 1000
-    unlabeled_score_weight: 0
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    random_sampling_num: 5532
-    random_sampling_policy: "random"
+  loss_weight: 1
+  loss_param {
+    ignore_label: -1
+    normalize: true
   }
 }
