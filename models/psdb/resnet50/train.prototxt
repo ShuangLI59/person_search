@@ -1,6 +1,6 @@
 mem_param {
   optimize_train: false
-  optimize_test: true
+  optimize_test: false
 }
 name: "ResNet50"
 layer {
@@ -2954,11 +2954,13 @@ layer {
     pad_w: 0
   }
 }
+
+#================================== detection ==================================
 layer {
-  name: "feat_raw"
+  name: "det_score"
   type: "InnerProduct"
   bottom: "caffe.Pooling_168"
-  top: "feat_raw"
+  top: "det_score"
   param {
     lr_mult: 1
     decay_mult: 1
@@ -2968,9 +2970,10 @@ layer {
     decay_mult: 0
   }
   inner_product_param {
-    num_output: 256
+    num_output: 2
     weight_filler {
-      type: "msra"
+      type: "gaussian"
+      std: 0.001
     }
     bias_filler {
       type: "constant"
@@ -2979,42 +2982,32 @@ layer {
   }
 }
 layer {
-  name: "feat_bn"
-  type: "BN"
-  bottom: "feat_raw"
-  top: "feat"
-  param {
-    lr_mult: 1
-    decay_mult: 0
-  }
-  param {
-    lr_mult: 1
-    decay_mult: 0
-  }
-  bn_param {
-    slope_filler {
-      value: 1
-    }
-    bias_filler {
-      value: 0
-    }
+  name: "det_accuracy"
+  type: "Accuracy"
+  bottom: "det_score"
+  bottom: "labels"
+  top: "det_accuracy"
+  accuracy_param {
+    ignore_label: -1
   }
 }
 layer {
-  name: "feat_relu"
-  type: "ReLU"
-  bottom: "feat"
-  top: "feat"
-}
-layer {
-  name: "feat_dropout"
-  type: "Dropout"
-  bottom: "feat"
-  top: "feat"
-  dropout_param {
-    dropout_ratio: 0.5
+  name: "det_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "det_score"
+  bottom: "labels"
+  top: "det_loss"
+  propagate_down: 1
+  propagate_down: 0
+  loss_weight: 1
+  loss_param {
+    ignore_label: -1
+    normalize: true
   }
 }
+
+
+#================================== bbox regression ==================================
 layer {
   name: "bbox_pred"
   type: "InnerProduct"
@@ -3022,11 +3015,9 @@ layer {
   top: "bbox_pred"
   param {
     lr_mult: 1
-    decay_mult: 1
   }
   param {
     lr_mult: 2
-    decay_mult: 0
   }
   inner_product_param {
     num_output: 8
@@ -3041,70 +3032,107 @@ layer {
   }
 }
 layer {
-  name: "bbox_loss"
+  name: "loss_bbox"
   type: "SmoothL1Loss"
   bottom: "bbox_pred"
   bottom: "bbox_targets"
   bottom: "bbox_inside_weights"
   bottom: "bbox_outside_weights"
-  top: "bbox_loss"
+  top: "loss_bbox"
   loss_weight: 1
 }
+
+
+#================================== identification ==================================
 layer {
-  name: "pid_score"
-  type: "InnerProduct"
+  name: "feat"
+  type: "Normalize"
+  bottom: "caffe.Pooling_168"
+  top: "feat"
+}
+layer {
+  name: "gather"
+  type: "Gather"
   bottom: "feat"
-  top: "pid_score"
+  bottom: "pid_label"
+  top: "feat_gathered"
+  top: "pid_label_gathered"
+}
+layer {
+  name: "labeled_matching"
+  type: "LabeledMatching"
+  bottom: "feat_gathered"
+  bottom: "pid_label_gathered"
+  top: "labeled_matching_scores"
+  top: "id_labels"
   param {
     lr_mult: 1
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 2
     decay_mult: 0
   }
-  inner_product_param {
-    num_output: 5533
-    weight_filler {
-      type: "gaussian"
-      std: 0.001
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  labeled_matching_param {
+    num_classes: 5532
+    momentum: 0.5
   }
 }
 layer {
-  name: "pid_loss"
-  type: "RandomSamplingSoftmaxLoss"
-  bottom: "pid_score"
-  bottom: "pid_label"
-  top: "pid_loss"
+  name: "sampling"
+  type: "TargetSampling"
+  bottom: "labeled_matching_scores"
+  bottom: "id_labels"
+  top: "labeled_matching_scores_sampled"
+  top: "id_labels_sampled"
   propagate_down: 1
   propagate_down: 0
-  loss_weight: 1
-  loss_param {
-    ignore_label: -1
-    normalize: false
-  }
-  rss_loss_param {
-    random_sampling_num: 100
-    random_sampling_policy: "random"
+  target_sampling_param {
+    num_sampling: 100
   }
 }
 layer {
-  name: "pid_accuracy"
+  name: "unlabeled_matching"
+  type: "UnlabeledMatching"
+  bottom: "feat_gathered"
+  bottom: "pid_label_gathered"
+  top: "unlabeled_matching_scores"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  unlabeled_matching_param {
+    queue_size: 1000
+  }
+}
+layer {
+  name: "concat"
+  type: "Concat"
+  bottom: "labeled_matching_scores_sampled"
+  bottom: "unlabeled_matching_scores"
+  top: "id_scores_sampled"
+}
+layer {
+  name: "id_accuracy"
   type: "Accuracy"
-  bottom: "pid_score"
-  bottom: "pid_label"
-  top: "pid_accuracy"
+  bottom: "id_scores_sampled"
+  bottom: "id_labels_sampled"
+  top: "id_accuracy"
   accuracy_param {
     ignore_label: -1
   }
 }
 layer {
-  name: "silence"
-  type: "Silence"
-  bottom: "labels"
+  name: "id_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "id_scores_sampled"
+  bottom: "id_labels_sampled"
+  top: "id_loss"
+  propagate_down: 1
+  propagate_down: 0
+  loss_weight: 1
+  loss_param {
+    ignore_label: -1
+    normalize: true
+  }
 }
