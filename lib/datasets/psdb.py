@@ -242,6 +242,7 @@ class psdb(imdb):
                 # compute distance between probe and gallery dets
                 if gallery_imname not in name_to_det_feat: continue
                 det, feat_g = name_to_det_feat[gallery_imname]
+                feat_g = feat_g.squeeze(axis=(2,3))
                 feat_g /= np.linalg.norm(feat_g, axis=1)[:, np.newaxis]
                 dis = -feat_g.dot(feat_p.ravel())
                 # assign label for each det
@@ -267,6 +268,7 @@ class psdb(imdb):
                     if gallery_imname in tested: continue
                     if gallery_imname not in name_to_det_feat: continue
                     det, feat_g = name_to_det_feat[gallery_imname]
+                    feat_g = feat_g.squeeze(axis=(2,3))
                     feat_g /= np.linalg.norm(feat_g, axis=1)[:, np.newaxis]
                     dis = -feat_g.dot(feat_p.ravel())
                     # guaranteed no target probe in these gallery images
