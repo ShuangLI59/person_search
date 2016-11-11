@@ -145,7 +145,7 @@ def detect_and_exfeat(net, imdb,
         keep = nms(cls_dets, cfg.TEST.NMS)
         all_boxes[i] = cls_dets[keep]
         for blob, feat in feat_dic.iteritems():
-            all_features[blob][i] = feat[keep]
+            all_features[blob][i] = feat[inds][keep]
         _t['misc'].toc()
 
         print 'im_detect: {:d}/{:d} {:.3f}s {:.3f}s'.format(i + 1, num_images,
