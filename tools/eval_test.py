@@ -17,10 +17,6 @@ from utils import pickle, unpickle
 from eval_utils import mpi_dispatch, mpi_collect
 
 
-# default path to generate the JSON file for visualization
-JSON_FOR_VIS = 'vis/data/test_results.json'
-
-
 # mpi setup
 mpi_comm = MPI.COMM_WORLD
 mpi_size = mpi_comm.Get_size()
@@ -103,9 +99,9 @@ def main(args):
         imdb.evaluate_detections(gboxes, det_thresh=args.det_thresh,
                                  labeled_only=True)
         imdb.evaluate_search(gboxes, gfeatures['feat'], pfeatures['feat'],
-                             det_thresh=args.det_thresh,
-                             gallery_size=args.gallery_size,
-                             dump_json=JSON_FOR_VIS if args.vis else None)
+             det_thresh=args.det_thresh,
+             gallery_size=args.gallery_size,
+             dump_json=osp.join(output_dir, 'results.json'))
 
 
 if __name__ == '__main__':
@@ -140,9 +136,6 @@ if __name__ == '__main__':
     parser.add_argument('--wait',
                         help='wait until net file exists',
                         default=True, type=bool)
-    parser.add_argument('--vis',
-                        help='visualize detections',
-                        action='store_true')
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file')
     parser.add_argument('--set', dest='set_cfgs',
