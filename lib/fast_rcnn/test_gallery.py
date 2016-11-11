@@ -272,7 +272,7 @@ def test_net_on_gallery_set(net, imdb, feat_blob,
             if vis:
                 vis_detections(im, imdb.classes[j], cls_dets)
             all_boxes[j][i] = cls_dets
-            all_features[j][i] = features[keep, :]
+            all_features[j][i] = features[inds][keep, :]
 
         # Limit to max_per_image detections *over all classes*
         if max_per_image > 0:
