@@ -1,13 +1,16 @@
+import json
+import os
 import os.path as osp
+
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.io import loadmat
+from sklearn.metrics import average_precision_score, precision_recall_curve
 
 import datasets
 from datasets.imdb import imdb
 from fast_rcnn.config import cfg
 from utils import cython_bbox, pickle, unpickle
-from sklearn.metrics import average_precision_score, precision_recall_curve
 
 
 def _compute_iou(a, b):
@@ -196,7 +199,7 @@ class psdb(imdb):
             print '  ap = {:.2%}'.format(ap)
 
     def evaluate_search(self, gallery_det, gallery_feat, probe_feat,
-                        det_thresh=0.5, gallery_size=100):
+                        det_thresh=0.5, gallery_size=100, dump_json=None):
         """
         gallery_det (list of ndarray): n_det x [x1, x2, y1, y2, score] per image
         gallery_feat (list of ndarray): n_det x D features per image
@@ -205,6 +208,7 @@ class psdb(imdb):
         det_thresh (float): filter out gallery detections whose scores below this
         gallery_size (int): gallery size [-1, 50, 100, 500, 1000, 2000, 4000]
                             -1 for using full set
+        dump_json (str): Path to save the results as a JSON file or None
         """
         assert self.num_images == len(gallery_det)
         assert self.num_images == len(gallery_feat)
@@ -226,14 +230,23 @@ class psdb(imdb):
                 name_to_det_feat[name] = (det[inds], feat[inds])
 
         aps = []
-        top1_acc = []
+        accs = []
+        topk = [1, 5, 10]
+        ret = {'image_root': self._data_path, 'results': []}
         for i in xrange(len(self.probes)):
             y_true, y_score = [], []
+            imgs, rois = [], []
             count_gt, count_tp = 0, 0
-            feat_p = probe_feat[i][np.newaxis, :]
-            feat_p /= np.linalg.norm(feat_p, axis=1)[:, np.newaxis]
+            # Get L2-normalized feature vector
+            feat_p = probe_feat[i].ravel()
+            feat_p = feat_p / np.linalg.norm(feat_p)
+            # Ignore the probe image
+            probe_imname = str(protoc['Query'][i]['imname'][0,0][0])
+            probe_roi = protoc['Query'][i]['idlocate'][0,0][0].astype(np.int32)
+            probe_roi[2:] += probe_roi[:2]
+            probe_gt = []
+            tested = set([probe_imname])
             # 1. Go through the gallery samples defined by the protocol
-            tested = set([str(protoc['Query'][i]['imname'][0,0][0])])
             for item in protoc['Gallery'][i].squeeze():
                 gallery_imname = str(item[0][0])
                 # some contain the probe (gt not empty), some not
@@ -242,25 +255,33 @@ class psdb(imdb):
                 # compute distance between probe and gallery dets
                 if gallery_imname not in name_to_det_feat: continue
                 det, feat_g = name_to_det_feat[gallery_imname]
-                feat_g = feat_g.squeeze(axis=(2,3))
-                feat_g /= np.linalg.norm(feat_g, axis=1)[:, np.newaxis]
-                dis = -feat_g.dot(feat_p.ravel())
+                # get L2-normalized feature matrix NxD
+                assert feat_g.size == np.prod(feat_g.shape[:2])
+                feat_g = feat_g.reshape(feat_g.shape[:2])
+                feat_g = feat_g / np.linalg.norm(feat_g, axis=1, keepdims=True)
+                # compute cosine similarities
+                sim = feat_g.dot(feat_p).ravel()
                 # assign label for each det
-                label = np.zeros(len(dis), dtype=np.int32)
+                label = np.zeros(len(sim), dtype=np.int32)
                 if gt.size > 0:
                     w, h = gt[2], gt[3]
                     gt[2:] += gt[:2]
+                    probe_gt.append({'img': str(gallery_imname),
+                                     'roi': map(float, list(gt))})
                     iou_thresh = min(0.5, (w * h * 1.0) / ((w + 10) * (h + 10)))
-                    inds = np.argsort(dis)
-                    dis = dis[inds]
+                    inds = np.argsort(sim)[::-1]
+                    sim = sim[inds]
+                    det = det[inds]
                     # only set the first matched det as true positive
-                    for j, roi in enumerate(det[inds, :4]):
+                    for j, roi in enumerate(det[:, :4]):
                         if _compute_iou(roi, gt) >= iou_thresh:
                             label[j] = 1
                             count_tp += 1
                             break
                 y_true.extend(list(label))
-                y_score.extend(list(-dis))
+                y_score.extend(list(sim))
+                imgs.extend([gallery_imname] * len(sim))
+                rois.extend(list(det))
                 tested.add(gallery_imname)
             # 2. Go through the remaining gallery images if using full set
             if use_full_set:
@@ -268,25 +289,56 @@ class psdb(imdb):
                     if gallery_imname in tested: continue
                     if gallery_imname not in name_to_det_feat: continue
                     det, feat_g = name_to_det_feat[gallery_imname]
-                    feat_g = feat_g.squeeze(axis=(2,3))
-                    feat_g /= np.linalg.norm(feat_g, axis=1)[:, np.newaxis]
-                    dis = -feat_g.dot(feat_p.ravel())
+                    # get L2-normalized feature matrix NxD
+                    assert feat_g.size == np.prod(feat_g.shape[:2])
+                    feat_g = feat_g.reshape(feat_g.shape[:2])
+                    feat_g = feat_g / np.linalg.norm(feat_g, axis=1, keepdims=True)
+                    # compute cosine similarities
+                    sim = feat_g.dot(feat_p).ravel()
                     # guaranteed no target probe in these gallery images
-                    label = np.zeros(len(dis), dtype=np.int32)
+                    label = np.zeros(len(sim), dtype=np.int32)
                     y_true.extend(list(label))
-                    y_score.extend(list(-dis))
+                    y_score.extend(list(sim))
+                    imgs.extend([gallery_imname] * len(sim))
+                    rois.extend(list(det))
             # 3. Compute AP for this probe (need to scale by recall rate)
+            y_score = np.asarray(y_score)
+            y_true = np.asarray(y_true)
             assert count_tp <= count_gt
             recall_rate = count_tp * 1.0 / count_gt
             ap = 0 if count_tp == 0 else \
                  average_precision_score(y_true, y_score) * recall_rate
             aps.append(ap)
-            maxind = np.argmax(y_score)
-            top1_acc.append(y_true[maxind])
+            inds = np.argsort(y_score)[::-1]
+            y_score = y_score[inds]
+            y_true = y_true[inds]
+            accs.append([min(1, sum(y_true[:k])) for k in topk])
+            # 4. Save result for JSON dump
+            new_entry = {'probe_img': str(probe_imname),
+                         'probe_roi': map(float, list(probe_roi)),
+                         'probe_gt': probe_gt,
+                         'gallery': []}
+            # only save top-10 predictions
+            for k in xrange(10):
+                new_entry['gallery'].append({
+                    'img': str(imgs[inds[k]]),
+                    'roi': map(float, list(rois[inds[k]])),
+                    'score': float(y_score[k]),
+                    'correct': int(y_true[k]),
+                })
+            ret['results'].append(new_entry)
 
         print 'search ranking:'
         print '  mAP = {:.2%}'.format(np.mean(aps))
-        print '  top-1 = {:.2%}'.format(np.mean(top1_acc))
+        accs = np.mean(accs, axis=0)
+        for i, k in enumerate(topk):
+            print '  top-{:2d} = {:.2%}'.format(k, accs[i])
+
+        if dump_json is not None:
+            if not osp.isdir(osp.dirname(dump_json)):
+                os.makedirs(osp.dirname(dump_json))
+            with open(dump_json, 'w') as f:
+                json.dump(ret, f)
 
     def evaluate_cls(self, detections, pid_ranks, pid_labels,
                      det_thresh=0.5):

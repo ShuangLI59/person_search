@@ -17,6 +17,10 @@ from utils import pickle, unpickle
 from eval_utils import mpi_dispatch, mpi_collect
 
 
+# default path to generate the JSON file for visualization
+JSON_FOR_VIS = 'vis/data/test_results.json'
+
+
 # mpi setup
 mpi_comm = MPI.COMM_WORLD
 mpi_size = mpi_comm.Get_size()
@@ -74,7 +78,7 @@ def main(args):
         start, end = mpi_dispatch(len(imdb.image_index), mpi_size, mpi_rank)
         net = caffe.Net(args.gallery_def, args.caffemodel, caffe.TEST)
         gboxes, gfeatures = detect_and_exfeat(net, imdb,
-            start=start, end=end, blob_names=blob_names, vis=args.vis)
+            start=start, end=end, blob_names=blob_names)
         gboxes = mpi_collect(mpi_comm, mpi_rank, gboxes)
         gfeatures = mpi_collect(mpi_comm, mpi_rank, gfeatures)
         del net # to release the cudnn conv static workspace
@@ -100,7 +104,8 @@ def main(args):
                                  labeled_only=True)
         imdb.evaluate_search(gboxes, gfeatures['feat'], pfeatures['feat'],
                              det_thresh=args.det_thresh,
-                             gallery_size=args.gallery_size)
+                             gallery_size=args.gallery_size,
+                             dump_json=JSON_FOR_VIS if args.vis else None)
 
 
 if __name__ == '__main__':
