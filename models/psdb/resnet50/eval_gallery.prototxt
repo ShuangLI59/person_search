@@ -2978,8 +2978,33 @@ layer {
 
 #================================== identification ==================================
 layer {
+  name: "feat_lowdim"
+  type: "InnerProduct"
+  bottom: "caffe.Pooling_168"
+  top: "feat_lowdim"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 256
+    weight_filler {
+      type: "msra"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
   name: "feat"
   type: "Normalize"
-  bottom: "caffe.Pooling_168"
+  bottom: "feat_lowdim"
   top: "feat"
 }
+

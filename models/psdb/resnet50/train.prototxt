@@ -3045,9 +3045,33 @@ layer {
 
 #================================== identification ==================================
 layer {
+  name: "feat_lowdim"
+  type: "InnerProduct"
+  bottom: "caffe.Pooling_168"
+  top: "feat_lowdim"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 256
+    weight_filler {
+      type: "msra"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
   name: "feat"
   type: "Normalize"
-  bottom: "caffe.Pooling_168"
+  bottom: "feat_lowdim"
   top: "feat"
 }
 layer {
@@ -3079,16 +3103,12 @@ layer {
   }
 }
 layer {
-  name: "sampling"
-  type: "TargetSampling"
+  name: "labeled_matching_scores_scale"
+  type: "Power"
   bottom: "labeled_matching_scores"
-  bottom: "id_labels"
-  top: "labeled_matching_scores_sampled"
-  top: "id_labels_sampled"
-  propagate_down: 1
-  propagate_down: 0
-  target_sampling_param {
-    num_sampling: 100
+  top: "labeled_matching_scores_scaled"
+  power_param {
+    scale: 10
   }
 }
 layer {
@@ -3102,21 +3122,30 @@ layer {
     decay_mult: 0
   }
   unlabeled_matching_param {
-    queue_size: 1000
+    queue_size: 5000
+  }
+}
+layer {
+  name: "unlabeled_matching_scores_scale"
+  type: "Power"
+  bottom: "unlabeled_matching_scores"
+  top: "unlabeled_matching_scores_scaled"
+  power_param {
+    scale: 10
   }
 }
 layer {
   name: "concat"
   type: "Concat"
-  bottom: "labeled_matching_scores_sampled"
-  bottom: "unlabeled_matching_scores"
-  top: "id_scores_sampled"
+  bottom: "labeled_matching_scores_scaled"
+  bottom: "unlabeled_matching_scores_scaled"
+  top: "id_scores"
 }
 layer {
   name: "id_accuracy"
   type: "Accuracy"
-  bottom: "id_scores_sampled"
-  bottom: "id_labels_sampled"
+  bottom: "id_scores"
+  bottom: "id_labels"
   top: "id_accuracy"
   accuracy_param {
     ignore_label: -1
@@ -3125,8 +3154,8 @@ layer {
 layer {
   name: "id_loss"
   type: "SoftmaxWithLoss"
-  bottom: "id_scores_sampled"
-  bottom: "id_labels_sampled"
+  bottom: "id_scores"
+  bottom: "id_labels"
   top: "id_loss"
   propagate_down: 1
   propagate_down: 0
