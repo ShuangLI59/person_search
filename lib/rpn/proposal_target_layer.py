@@ -124,6 +124,8 @@ class ProposalTargetLayer(caffe.Layer):
 
     def backward(self, top, propagate_down, bottom):
         """This layer does not propagate gradients."""
+        for i in xrange(len(bottom)):
+            bottom[i].diff.fill(0)
         pass
 
     def reshape(self, bottom, top):
