@@ -1,6 +1,6 @@
 mem_param {
-  optimize_train: false
-  optimize_test: false
+  optimize_train: true
+  optimize_test: true
 }
 name: "ResNet50"
 layer {
@@ -3075,18 +3075,10 @@ layer {
   top: "feat"
 }
 layer {
-  name: "gather"
-  type: "Gather"
-  bottom: "feat"
-  bottom: "pid_label"
-  top: "feat_gathered"
-  top: "pid_label_gathered"
-}
-layer {
   name: "labeled_matching"
   type: "LabeledMatching"
-  bottom: "feat_gathered"
-  bottom: "pid_label_gathered"
+  bottom: "feat"
+  bottom: "pid_label"
   top: "labeled_matching_scores"
   top: "id_labels"
   param {
@@ -3114,8 +3106,8 @@ layer {
 layer {
   name: "unlabeled_matching"
   type: "UnlabeledMatching"
-  bottom: "feat_gathered"
-  bottom: "pid_label_gathered"
+  bottom: "feat"
+  bottom: "pid_label"
   top: "unlabeled_matching_scores"
   param {
     lr_mult: 1

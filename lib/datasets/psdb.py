@@ -239,7 +239,6 @@ class psdb(imdb):
             count_gt, count_tp = 0, 0
             # Get L2-normalized feature vector
             feat_p = probe_feat[i].ravel()
-            feat_p = feat_p / np.linalg.norm(feat_p)
             # Ignore the probe image
             probe_imname = str(protoc['Query'][i]['imname'][0,0][0])
             probe_roi = protoc['Query'][i]['idlocate'][0,0][0].astype(np.int32)
@@ -258,7 +257,6 @@ class psdb(imdb):
                 # get L2-normalized feature matrix NxD
                 assert feat_g.size == np.prod(feat_g.shape[:2])
                 feat_g = feat_g.reshape(feat_g.shape[:2])
-                feat_g = feat_g / np.linalg.norm(feat_g, axis=1, keepdims=True)
                 # compute cosine similarities
                 sim = feat_g.dot(feat_p).ravel()
                 # assign label for each det
@@ -292,7 +290,6 @@ class psdb(imdb):
                     # get L2-normalized feature matrix NxD
                     assert feat_g.size == np.prod(feat_g.shape[:2])
                     feat_g = feat_g.reshape(feat_g.shape[:2])
-                    feat_g = feat_g / np.linalg.norm(feat_g, axis=1, keepdims=True)
                     # compute cosine similarities
                     sim = feat_g.dot(feat_p).ravel()
                     # guaranteed no target probe in these gallery images

@@ -1,6 +1,6 @@
 mem_param {
-  optimize_train: false
-  optimize_test: false
+  optimize_train: true
+  optimize_test: true
   exclude_blob: "rois"
   exclude_blob: "feat"
   exclude_blob: "det_score"

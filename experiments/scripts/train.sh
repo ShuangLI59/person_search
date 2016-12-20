@@ -12,7 +12,7 @@ set -e
 export PYTHONUNBUFFERED="True"
 
 GPU_ID=$1
-NET=VGG16
+NET=resnet50
 DATASET=psdb
 
 array=( $@ )
@@ -37,12 +37,12 @@ LOG="experiments/logs/${DATASET}_train_${NET}_${EXTRA_ARGS_SLUG}.txt.`date +'%Y-
 exec &> >(tee -a "$LOG")
 echo Logging output to "$LOG"
 
-time python2 tools/train_net.py --gpu ${GPU_ID} \
+python2 tools/train_net.py --gpu ${GPU_ID} \
   --solver models/${PT_DIR}/${NET}/solver.prototxt \
-  --weights data/imagenet_models/${NET}.v2.caffemodel \
+  --weights data/imagenet_models/${NET}.caffemodel \
   --imdb ${TRAIN_IMDB} \
   --iters ${ITERS} \
-  --cfg experiments/cfgs/train_vgg16.yml \
+  --cfg experiments/cfgs/resnet50.yml \
   --rand \
   ${EXTRA_ARGS}
 

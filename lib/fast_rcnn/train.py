@@ -71,22 +71,7 @@ class SolverWrapper(object):
 
     def train_model(self, max_iters):
         """Network training loop."""
-        #self.solver.step(max_iters)
-        import pdb
-        net = self.solver.net
-        def d(blob):
-            return np.abs(net.blobs[blob].diff).mean()
-        while self.solver.iter < max_iters:
-            self.solver.step(1)
-            print 'stem <- rpn  diff = {:.8f}'.format(d('caffe.BN_105_caffe.ReLU_106_0_split_0'))
-            print 'stem <- cls  diff = {:.8f}'.format(d('caffe.BN_105_caffe.ReLU_106_0_split_1'))
-            print 'pool <- det  diff = {:.8f}'.format(d('caffe.Pooling_168_caffe.Pooling_168_0_split_0'))
-            print 'pool <- bbox diff = {:.8f}'.format(d('caffe.Pooling_168_caffe.Pooling_168_0_split_1'))
-            print 'pool <- id   diff = {:.8f}'.format(d('caffe.Pooling_168_caffe.Pooling_168_0_split_2'))
-            print 'feat <- lb   diff = {:.8f}'.format(d('feat_gathered_gather_0_split_0'))
-            print 'feat <- ul   diff = {:.8f}'.format(d('feat_gathered_gather_0_split_1'))
-            print ''
-            #pdb.set_trace()
+        self.solver.step(max_iters)
 
 def get_training_roidb(imdb):
     """Returns a roidb (Region of Interest database) for use in training."""

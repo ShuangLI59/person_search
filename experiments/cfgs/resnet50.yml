@@ -1,4 +1,3 @@
-RNG_SEED: 123
 EXP_DIR: .
 TRAIN:
   HAS_RPN: True
