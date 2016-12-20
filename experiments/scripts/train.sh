@@ -42,7 +42,7 @@ python2 tools/train_net.py --gpu ${GPU_ID} \
   --weights data/imagenet_models/${NET}.caffemodel \
   --imdb ${TRAIN_IMDB} \
   --iters ${ITERS} \
-  --cfg experiments/cfgs/resnet50.yml \
+  --cfg experiments/cfgs/${NET}.yml \
   --rand \
   ${EXTRA_ARGS}
 
