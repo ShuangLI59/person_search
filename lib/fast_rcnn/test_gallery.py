@@ -5,6 +5,7 @@ from fast_rcnn.config import cfg
 from fast_rcnn.bbox_transform import clip_boxes, bbox_transform_inv
 from fast_rcnn.nms_wrapper import nms
 from fast_rcnn.test_utils import get_image_blob, get_gt_boxes_blob
+from fast_rcnn.test_probe import _im_exfeat
 from utils.timer import Timer
 
 
@@ -153,5 +154,42 @@ def detect_and_exfeat(net, imdb,
 
         if vis:
             _vis_detections(im, imdb.classes[j], all_boxes[i])
+
+    return all_boxes, all_features
+
+
+def usegt_and_exfeat(net, imdb,
+                     start=None, end=None, blob_names=None):
+    start = start or 0
+    end = end or imdb.num_images
+    num_images = end - start
+
+    # all detections are collected into:
+    #    all_boxes[image] = N x 5 array of detections (gt) in
+    #    (x1, y1, x2, y2, score)
+    #    all_features[blob][image] = N x D array of features
+    all_boxes = [0 for _ in xrange(num_images)]
+    all_features = {} if blob_names is None else \
+                   {blob: [0 for _ in xrange(num_images)]
+                    for blob in blob_names}
+
+    # timers
+    _t = {'gt_exfeat' : Timer(), 'misc' : Timer()}
+
+    for i in xrange(num_images):
+        im = cv2.imread(imdb.image_path_at(start + i))
+        gt = imdb.roidb[start + i]['gt_boxes']
+
+        _t['gt_exfeat'].tic()
+        feat_dic = _im_exfeat(net, im, gt, blob_names)
+        _t['gt_exfeat'].toc()
+
+        all_boxes[i] = np.hstack((gt, np.ones(gt.shape[0], 1))) \
+            .astype(np.float32)
+        for blob, feat in feat_dic.iteritems():
+            all_features[blob][i] = feat
+
+        print 'gt_exfeat: {:d}/{:d} {:.3f}s'.format(i + 1, num_images,
+            _t['gt_exfeat'].average_time)
 
     return all_boxes, all_features

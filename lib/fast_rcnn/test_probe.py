@@ -48,7 +48,7 @@ def _im_exfeat(net, im, roi, blob_names):
 def exfeat(net, probes,
            start=None, end=None, blob_names=None):
     start = start or 0
-    end = end or len(images)
+    end = end or len(probes)
     num_images = end - start
 
     # all_features[blob] = num_images x D array of features

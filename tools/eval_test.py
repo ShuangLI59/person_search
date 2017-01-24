@@ -9,7 +9,7 @@ import numpy as np
 import caffe
 from mpi4py import MPI
 
-from fast_rcnn.test_gallery import detect_and_exfeat
+from fast_rcnn.test_gallery import detect_and_exfeat, usegt_and_exfeat
 from fast_rcnn.test_probe import exfeat
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
 from datasets.factory import get_imdb
@@ -72,9 +72,14 @@ def main(args):
 
         # 1. Detect and extract features from all the gallery images in the imdb
         start, end = mpi_dispatch(len(imdb.image_index), mpi_size, mpi_rank)
-        net = caffe.Net(args.gallery_def, args.caffemodel, caffe.TEST)
-        gboxes, gfeatures = detect_and_exfeat(net, imdb,
-            start=start, end=end, blob_names=blob_names)
+        if args.use_gt:
+            net = caffe.Net(args.probe_def, args.caffemodel, caffe.TEST)
+            gboxes, gfeatures = usegt_and_exfeat(net, imdb,
+                start=start, end=end, blob_names=blob_names)
+        else:
+            net = caffe.Net(args.gallery_def, args.caffemodel, caffe.TEST)
+            gboxes, gfeatures = detect_and_exfeat(net, imdb,
+                start=start, end=end, blob_names=blob_names)
         gboxes = mpi_collect(mpi_comm, mpi_rank, gboxes)
         gfeatures = mpi_collect(mpi_comm, mpi_rank, gfeatures)
         del net # to release the cudnn conv static workspace
@@ -132,6 +137,9 @@ if __name__ == '__main__':
                         choices=[-1, 50, 100, 500, 1000, 2000, 4000])
     parser.add_argument('--eval_only',
                         help='skip the feature extraction and only do eval',
+                        action='store_true')
+    parser.add_argument('--use_gt',
+                        help='use ground truth boxes as proposals',
                         action='store_true')
     parser.add_argument('--wait',
                         help='wait until net file exists',
