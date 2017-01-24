@@ -178,13 +178,13 @@ def usegt_and_exfeat(net, imdb,
 
     for i in xrange(num_images):
         im = cv2.imread(imdb.image_path_at(start + i))
-        gt = imdb.roidb[start + i]['gt_boxes']
+        gt = imdb.roidb[start + i]['boxes']
 
         _t['gt_exfeat'].tic()
         feat_dic = _im_exfeat(net, im, gt, blob_names)
         _t['gt_exfeat'].toc()
 
-        all_boxes[i] = np.hstack((gt, np.ones(gt.shape[0], 1))) \
+        all_boxes[i] = np.hstack((gt, np.ones((gt.shape[0], 1)))) \
             .astype(np.float32)
         for blob, feat in feat_dic.iteritems():
             all_features[blob][i] = feat
