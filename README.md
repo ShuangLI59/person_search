@@ -8,8 +8,7 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
 1. Clone this repo **recursively** and switch to the `oim` branch
 
   ```Shell
-  git clone --recursive https://github.com/ShuangLI59/person_search.git
-  git checkout oim
+  git clone --recursive https://github.com/ShuangLI59/person_search.git -b oim
   ```
 
 2. Build Caffe with python layers and interface
@@ -50,7 +49,7 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
 
 2. Download an ImageNet [pretrained **ResNet-50 model**](https://drive.google.com/open?id=0B67_d0rLRTQYUHFjU0pPSExhS1U) to `data/imagenet_models`.
 
-3. Training
+3. Training with GPU=0
 
   ```Shell
   experiments/scripts/train.sh 0 --set EXP_DIR resnet50
