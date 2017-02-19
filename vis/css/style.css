@@ -1,0 +1,62 @@
+html, body, header, button, input {
+  font-family: "Roboto", Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #999;
+}
+
+header {
+  padding: 20px 0px;
+  height: 60px;
+  background: #eee;
+}
+
+header #intro {
+  display: inline-block;
+  text-align: left;
+  float: left;
+  margin: 10px 20px;
+  font-size: 16px;
+}
+
+header button {
+  height: 50px;
+  font-size: 20px;
+}
+
+header input {
+  height: 48px;
+  width: 100px;
+  margin: 0 5px;
+  padding-right: 5px;
+  font-size: 20px;
+  text-align: right;
+}
+
+header #counter {
+  display: inline-block;
+  font-size: 20px;
+  margin: 0 5px;
+}
+
+.text-red { color: #FF5722; }
+.text-green { color: #4CAF50; }
+.text-blue { color: #2196F3; }
+
+.pane {
+  width: 100%;
+  overflow: scroll;
+}
+
+.horizontal-scrollable {
+  width: 6000px;
+  display: inline-block;
+}
+
+canvas {
+  float: left;
+  margin: 20px 10px;
+}

@@ -75,6 +75,10 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
       top-10 = 92.38%
     ```
 
+5. Visualization
+
+    The evaluation will also produce a json file `output/psdb_test/resnet50/resnet50_iter_50000/results.json` for visualization. Just copy it to `vis/` and run `python2 -m SimpleHTTPServer`. Then open a browser and go to [http://localhost:8000/vis](http://localhost:8000/vis).
+
 ## Citation
 
     @article{xiaoli2016end,
