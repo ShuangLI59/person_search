@@ -21,6 +21,7 @@ class imdb(object):
         self._num_classes = 0
         self._classes = []
         self._image_index = []
+        self._probes = []
         self._obj_proposer = 'selective_search'
         self._roidb = None
         self._roidb_handler = self.default_roidb
@@ -76,23 +77,16 @@ class imdb(object):
 
     @property
     def num_images(self):
-      return len(self.image_index)
+        return len(self.image_index)
+
+    @property
+    def probes(self):
+        return self._probes
 
     def image_path_at(self, i):
         raise NotImplementedError
 
     def default_roidb(self):
-        raise NotImplementedError
-
-    def evaluate_detections(self, all_boxes, output_dir=None):
-        """
-        all_boxes is a list of length number-of-classes.
-        Each list element is a list of length number-of-images.
-        Each of those list elements is either an empty list []
-        or a numpy array of detection.
-
-        all_boxes[class][image] = [] or np.array of shape #dets x 5
-        """
         raise NotImplementedError
 
     def _get_widths(self):
@@ -249,7 +243,3 @@ class imdb(object):
             a[i]['seg_areas'] = np.hstack((a[i]['seg_areas'],
                                            b[i]['seg_areas']))
         return a
-
-    def competition_mode(self, on):
-        """Turn competition mode on or off."""
-        pass

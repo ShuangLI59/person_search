@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Visualization</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div id="intro">
+        1st row: <span class="text-blue">query</span> and <span class="text-green">ground truth</span> gallery boxes<br>
+        2nd row: predicted gallery boxes, <span class="text-green">correct</span> and <span class="text-red">incorrect</span>
+      </div>
+      <button id="prev-btn">Prev (a)</button>
+      <input type="text" id="cur-id-text">
+      <div id="counter"></div>
+      <button id="go-btn">Go</button>
+      <button id="next-btn">Next (d)</button>
+      <button id="rand-btn">Random (r)</button>
+    </header>
+    <div class="pane" id="probe-wrapper">
+      <div class="horizontal-scrollable" id="probe">
+      </div>
+    </div>
+    <div class="pane" id="gallery-wrapper">
+      <div class="horizontal-scrollable" id="gallery">
+      </div>
+    </div>
+  </main>
+
+  <script src="js/jquery-3.1.1.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

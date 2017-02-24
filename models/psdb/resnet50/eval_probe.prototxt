@@ -1,0 +1,2921 @@
+mem_param {
+  optimize_train: true
+  optimize_test: true
+  exclude_blob: "feat"
+}
+name: "ResNet50"
+
+input: "data"
+input_shape {
+  dim: 1
+  dim: 3
+  dim: 224
+  dim: 224
+}
+
+input: "im_info"
+input_shape {
+  dim: 1
+  dim: 3
+}
+
+input: "rois"
+input_shape {
+  dim: 1
+  dim: 4
+}
+
+layer {
+  name: "caffe.SpatialConvolution_0"
+  type: "Convolution"
+  bottom: "data"
+  top: "caffe.SpatialConvolution_0"
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    pad_h: 3
+    pad_w: 3
+    kernel_h: 7
+    kernel_w: 7
+    stride_h: 2
+    stride_w: 2
+  }
+}
+layer {
+  name: "caffe.BN_1"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_0"
+  top: "caffe.BN_1"
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_2"
+  type: "ReLU"
+  bottom: "caffe.BN_1"
+  top: "caffe.BN_1"
+}
+layer {
+  name: "caffe.Pooling_3"
+  type: "Pooling"
+  bottom: "caffe.BN_1"
+  top: "caffe.Pooling_3"
+  pooling_param {
+    pool: MAX
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 2
+    stride_w: 2
+    pad_h: 0
+    pad_w: 0
+  }
+  propagate_down: false
+}
+layer {
+  name: "caffe.SpatialConvolution_4"
+  type: "Convolution"
+  bottom: "caffe.Pooling_3"
+  top: "caffe.SpatialConvolution_4"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_5"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_4"
+  top: "caffe.BN_5"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_6"
+  type: "ReLU"
+  bottom: "caffe.BN_5"
+  top: "caffe.BN_5"
+}
+layer {
+  name: "caffe.SpatialConvolution_7"
+  type: "Convolution"
+  bottom: "caffe.BN_5"
+  top: "caffe.SpatialConvolution_7"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_8"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_7"
+  top: "caffe.BN_8"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_9"
+  type: "ReLU"
+  bottom: "caffe.BN_8"
+  top: "caffe.BN_8"
+}
+layer {
+  name: "caffe.SpatialConvolution_10"
+  type: "Convolution"
+  bottom: "caffe.BN_8"
+  top: "caffe.SpatialConvolution_10"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.SpatialConvolution_11"
+  type: "Convolution"
+  bottom: "caffe.Pooling_3"
+  top: "caffe.SpatialConvolution_11"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_12"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_10"
+  bottom: "caffe.SpatialConvolution_11"
+  top: "caffe.Eltwise_12"
+}
+layer {
+  name: "caffe.BN_13"
+  type: "BN"
+  bottom: "caffe.Eltwise_12"
+  top: "caffe.BN_13"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_14"
+  type: "ReLU"
+  bottom: "caffe.BN_13"
+  top: "caffe.BN_13"
+}
+layer {
+  name: "caffe.SpatialConvolution_15"
+  type: "Convolution"
+  bottom: "caffe.BN_13"
+  top: "caffe.SpatialConvolution_15"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_16"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_15"
+  top: "caffe.BN_16"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_17"
+  type: "ReLU"
+  bottom: "caffe.BN_16"
+  top: "caffe.BN_16"
+}
+layer {
+  name: "caffe.SpatialConvolution_18"
+  type: "Convolution"
+  bottom: "caffe.BN_16"
+  top: "caffe.SpatialConvolution_18"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_19"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_18"
+  top: "caffe.BN_19"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_20"
+  type: "ReLU"
+  bottom: "caffe.BN_19"
+  top: "caffe.BN_19"
+}
+layer {
+  name: "caffe.SpatialConvolution_21"
+  type: "Convolution"
+  bottom: "caffe.BN_19"
+  top: "caffe.SpatialConvolution_21"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_22"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_21"
+  bottom: "caffe.BN_13"
+  top: "caffe.Eltwise_22"
+}
+layer {
+  name: "caffe.BN_23"
+  type: "BN"
+  bottom: "caffe.Eltwise_22"
+  top: "caffe.BN_23"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_24"
+  type: "ReLU"
+  bottom: "caffe.BN_23"
+  top: "caffe.BN_23"
+}
+layer {
+  name: "caffe.SpatialConvolution_25"
+  type: "Convolution"
+  bottom: "caffe.BN_23"
+  top: "caffe.SpatialConvolution_25"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_26"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_25"
+  top: "caffe.BN_26"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_27"
+  type: "ReLU"
+  bottom: "caffe.BN_26"
+  top: "caffe.BN_26"
+}
+layer {
+  name: "caffe.SpatialConvolution_28"
+  type: "Convolution"
+  bottom: "caffe.BN_26"
+  top: "caffe.SpatialConvolution_28"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_29"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_28"
+  top: "caffe.BN_29"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_30"
+  type: "ReLU"
+  bottom: "caffe.BN_29"
+  top: "caffe.BN_29"
+}
+layer {
+  name: "caffe.SpatialConvolution_31"
+  type: "Convolution"
+  bottom: "caffe.BN_29"
+  top: "caffe.SpatialConvolution_31"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_32"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_31"
+  bottom: "caffe.BN_23"
+  top: "caffe.Eltwise_32"
+}
+layer {
+  name: "caffe.BN_33"
+  type: "BN"
+  bottom: "caffe.Eltwise_32"
+  top: "caffe.BN_33"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_34"
+  type: "ReLU"
+  bottom: "caffe.BN_33"
+  top: "caffe.BN_33"
+}
+layer {
+  name: "caffe.SpatialConvolution_35"
+  type: "Convolution"
+  bottom: "caffe.BN_33"
+  top: "caffe.SpatialConvolution_35"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_36"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_35"
+  top: "caffe.BN_36"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_37"
+  type: "ReLU"
+  bottom: "caffe.BN_36"
+  top: "caffe.BN_36"
+}
+layer {
+  name: "caffe.SpatialConvolution_38"
+  type: "Convolution"
+  bottom: "caffe.BN_36"
+  top: "caffe.SpatialConvolution_38"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 2
+    stride_w: 2
+  }
+}
+layer {
+  name: "caffe.BN_39"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_38"
+  top: "caffe.BN_39"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_40"
+  type: "ReLU"
+  bottom: "caffe.BN_39"
+  top: "caffe.BN_39"
+}
+layer {
+  name: "caffe.SpatialConvolution_41"
+  type: "Convolution"
+  bottom: "caffe.BN_39"
+  top: "caffe.SpatialConvolution_41"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.SpatialConvolution_42"
+  type: "Convolution"
+  bottom: "caffe.BN_33"
+  top: "caffe.SpatialConvolution_42"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 2
+    stride_w: 2
+  }
+}
+layer {
+  name: "caffe.Eltwise_43"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_41"
+  bottom: "caffe.SpatialConvolution_42"
+  top: "caffe.Eltwise_43"
+}
+layer {
+  name: "caffe.BN_44"
+  type: "BN"
+  bottom: "caffe.Eltwise_43"
+  top: "caffe.BN_44"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_45"
+  type: "ReLU"
+  bottom: "caffe.BN_44"
+  top: "caffe.BN_44"
+}
+layer {
+  name: "caffe.SpatialConvolution_46"
+  type: "Convolution"
+  bottom: "caffe.BN_44"
+  top: "caffe.SpatialConvolution_46"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_47"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_46"
+  top: "caffe.BN_47"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_48"
+  type: "ReLU"
+  bottom: "caffe.BN_47"
+  top: "caffe.BN_47"
+}
+layer {
+  name: "caffe.SpatialConvolution_49"
+  type: "Convolution"
+  bottom: "caffe.BN_47"
+  top: "caffe.SpatialConvolution_49"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_50"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_49"
+  top: "caffe.BN_50"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_51"
+  type: "ReLU"
+  bottom: "caffe.BN_50"
+  top: "caffe.BN_50"
+}
+layer {
+  name: "caffe.SpatialConvolution_52"
+  type: "Convolution"
+  bottom: "caffe.BN_50"
+  top: "caffe.SpatialConvolution_52"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_53"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_52"
+  bottom: "caffe.BN_44"
+  top: "caffe.Eltwise_53"
+}
+layer {
+  name: "caffe.BN_54"
+  type: "BN"
+  bottom: "caffe.Eltwise_53"
+  top: "caffe.BN_54"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_55"
+  type: "ReLU"
+  bottom: "caffe.BN_54"
+  top: "caffe.BN_54"
+}
+layer {
+  name: "caffe.SpatialConvolution_56"
+  type: "Convolution"
+  bottom: "caffe.BN_54"
+  top: "caffe.SpatialConvolution_56"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_57"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_56"
+  top: "caffe.BN_57"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_58"
+  type: "ReLU"
+  bottom: "caffe.BN_57"
+  top: "caffe.BN_57"
+}
+layer {
+  name: "caffe.SpatialConvolution_59"
+  type: "Convolution"
+  bottom: "caffe.BN_57"
+  top: "caffe.SpatialConvolution_59"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_60"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_59"
+  top: "caffe.BN_60"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_61"
+  type: "ReLU"
+  bottom: "caffe.BN_60"
+  top: "caffe.BN_60"
+}
+layer {
+  name: "caffe.SpatialConvolution_62"
+  type: "Convolution"
+  bottom: "caffe.BN_60"
+  top: "caffe.SpatialConvolution_62"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_63"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_62"
+  bottom: "caffe.BN_54"
+  top: "caffe.Eltwise_63"
+}
+layer {
+  name: "caffe.BN_64"
+  type: "BN"
+  bottom: "caffe.Eltwise_63"
+  top: "caffe.BN_64"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_65"
+  type: "ReLU"
+  bottom: "caffe.BN_64"
+  top: "caffe.BN_64"
+}
+layer {
+  name: "caffe.SpatialConvolution_66"
+  type: "Convolution"
+  bottom: "caffe.BN_64"
+  top: "caffe.SpatialConvolution_66"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_67"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_66"
+  top: "caffe.BN_67"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_68"
+  type: "ReLU"
+  bottom: "caffe.BN_67"
+  top: "caffe.BN_67"
+}
+layer {
+  name: "caffe.SpatialConvolution_69"
+  type: "Convolution"
+  bottom: "caffe.BN_67"
+  top: "caffe.SpatialConvolution_69"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_70"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_69"
+  top: "caffe.BN_70"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_71"
+  type: "ReLU"
+  bottom: "caffe.BN_70"
+  top: "caffe.BN_70"
+}
+layer {
+  name: "caffe.SpatialConvolution_72"
+  type: "Convolution"
+  bottom: "caffe.BN_70"
+  top: "caffe.SpatialConvolution_72"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_73"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_72"
+  bottom: "caffe.BN_64"
+  top: "caffe.Eltwise_73"
+}
+layer {
+  name: "caffe.BN_74"
+  type: "BN"
+  bottom: "caffe.Eltwise_73"
+  top: "caffe.BN_74"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_75"
+  type: "ReLU"
+  bottom: "caffe.BN_74"
+  top: "caffe.BN_74"
+}
+layer {
+  name: "caffe.SpatialConvolution_76"
+  type: "Convolution"
+  bottom: "caffe.BN_74"
+  top: "caffe.SpatialConvolution_76"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_77"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_76"
+  top: "caffe.BN_77"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_78"
+  type: "ReLU"
+  bottom: "caffe.BN_77"
+  top: "caffe.BN_77"
+}
+layer {
+  name: "caffe.SpatialConvolution_79"
+  type: "Convolution"
+  bottom: "caffe.BN_77"
+  top: "caffe.SpatialConvolution_79"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 2
+    stride_w: 2
+  }
+}
+layer {
+  name: "caffe.BN_80"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_79"
+  top: "caffe.BN_80"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_81"
+  type: "ReLU"
+  bottom: "caffe.BN_80"
+  top: "caffe.BN_80"
+}
+layer {
+  name: "caffe.SpatialConvolution_82"
+  type: "Convolution"
+  bottom: "caffe.BN_80"
+  top: "caffe.SpatialConvolution_82"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.SpatialConvolution_83"
+  type: "Convolution"
+  bottom: "caffe.BN_74"
+  top: "caffe.SpatialConvolution_83"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 2
+    stride_w: 2
+  }
+}
+layer {
+  name: "caffe.Eltwise_84"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_82"
+  bottom: "caffe.SpatialConvolution_83"
+  top: "caffe.Eltwise_84"
+}
+layer {
+  name: "caffe.BN_85"
+  type: "BN"
+  bottom: "caffe.Eltwise_84"
+  top: "caffe.BN_85"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_86"
+  type: "ReLU"
+  bottom: "caffe.BN_85"
+  top: "caffe.BN_85"
+}
+layer {
+  name: "caffe.SpatialConvolution_87"
+  type: "Convolution"
+  bottom: "caffe.BN_85"
+  top: "caffe.SpatialConvolution_87"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_88"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_87"
+  top: "caffe.BN_88"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_89"
+  type: "ReLU"
+  bottom: "caffe.BN_88"
+  top: "caffe.BN_88"
+}
+layer {
+  name: "caffe.SpatialConvolution_90"
+  type: "Convolution"
+  bottom: "caffe.BN_88"
+  top: "caffe.SpatialConvolution_90"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_91"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_90"
+  top: "caffe.BN_91"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_92"
+  type: "ReLU"
+  bottom: "caffe.BN_91"
+  top: "caffe.BN_91"
+}
+layer {
+  name: "caffe.SpatialConvolution_93"
+  type: "Convolution"
+  bottom: "caffe.BN_91"
+  top: "caffe.SpatialConvolution_93"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_94"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_93"
+  bottom: "caffe.BN_85"
+  top: "caffe.Eltwise_94"
+}
+layer {
+  name: "caffe.BN_95"
+  type: "BN"
+  bottom: "caffe.Eltwise_94"
+  top: "caffe.BN_95"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_96"
+  type: "ReLU"
+  bottom: "caffe.BN_95"
+  top: "caffe.BN_95"
+}
+layer {
+  name: "caffe.SpatialConvolution_97"
+  type: "Convolution"
+  bottom: "caffe.BN_95"
+  top: "caffe.SpatialConvolution_97"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_98"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_97"
+  top: "caffe.BN_98"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_99"
+  type: "ReLU"
+  bottom: "caffe.BN_98"
+  top: "caffe.BN_98"
+}
+layer {
+  name: "caffe.SpatialConvolution_100"
+  type: "Convolution"
+  bottom: "caffe.BN_98"
+  top: "caffe.SpatialConvolution_100"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_101"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_100"
+  top: "caffe.BN_101"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_102"
+  type: "ReLU"
+  bottom: "caffe.BN_101"
+  top: "caffe.BN_101"
+}
+layer {
+  name: "caffe.SpatialConvolution_103"
+  type: "Convolution"
+  bottom: "caffe.BN_101"
+  top: "caffe.SpatialConvolution_103"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_104"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_103"
+  bottom: "caffe.BN_95"
+  top: "caffe.Eltwise_104"
+}
+layer {
+  name: "caffe.BN_105"
+  type: "BN"
+  bottom: "caffe.Eltwise_104"
+  top: "caffe.BN_105"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_106"
+  type: "ReLU"
+  bottom: "caffe.BN_105"
+  top: "caffe.BN_105"
+}
+
+#========= RCNN ============
+
+layer {
+  name: "roi_pool"
+  type: "ROIPooling"
+  bottom: "caffe.BN_105"
+  bottom: "rois"
+  top: "roi_pool"
+  roi_pooling_param {
+    pooled_w: 14
+    pooled_h: 14
+    spatial_scale: 0.0625 # 1/16
+  }
+}
+
+
+layer {
+  name: "caffe.SpatialConvolution_107"
+  type: "Convolution"
+  bottom: "roi_pool"
+  top: "caffe.SpatialConvolution_107"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_108"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_107"
+  top: "caffe.BN_108"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_109"
+  type: "ReLU"
+  bottom: "caffe.BN_108"
+  top: "caffe.BN_108"
+}
+layer {
+  name: "caffe.SpatialConvolution_110"
+  type: "Convolution"
+  bottom: "caffe.BN_108"
+  top: "caffe.SpatialConvolution_110"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_111"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_110"
+  top: "caffe.BN_111"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_112"
+  type: "ReLU"
+  bottom: "caffe.BN_111"
+  top: "caffe.BN_111"
+}
+layer {
+  name: "caffe.SpatialConvolution_113"
+  type: "Convolution"
+  bottom: "caffe.BN_111"
+  top: "caffe.SpatialConvolution_113"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_114"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_113"
+  bottom: "roi_pool"
+  top: "caffe.Eltwise_114"
+}
+layer {
+  name: "caffe.BN_115"
+  type: "BN"
+  bottom: "caffe.Eltwise_114"
+  top: "caffe.BN_115"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_116"
+  type: "ReLU"
+  bottom: "caffe.BN_115"
+  top: "caffe.BN_115"
+}
+layer {
+  name: "caffe.SpatialConvolution_117"
+  type: "Convolution"
+  bottom: "caffe.BN_115"
+  top: "caffe.SpatialConvolution_117"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_118"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_117"
+  top: "caffe.BN_118"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_119"
+  type: "ReLU"
+  bottom: "caffe.BN_118"
+  top: "caffe.BN_118"
+}
+layer {
+  name: "caffe.SpatialConvolution_120"
+  type: "Convolution"
+  bottom: "caffe.BN_118"
+  top: "caffe.SpatialConvolution_120"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_121"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_120"
+  top: "caffe.BN_121"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_122"
+  type: "ReLU"
+  bottom: "caffe.BN_121"
+  top: "caffe.BN_121"
+}
+layer {
+  name: "caffe.SpatialConvolution_123"
+  type: "Convolution"
+  bottom: "caffe.BN_121"
+  top: "caffe.SpatialConvolution_123"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_124"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_123"
+  bottom: "caffe.BN_115"
+  top: "caffe.Eltwise_124"
+}
+layer {
+  name: "caffe.BN_125"
+  type: "BN"
+  bottom: "caffe.Eltwise_124"
+  top: "caffe.BN_125"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_126"
+  type: "ReLU"
+  bottom: "caffe.BN_125"
+  top: "caffe.BN_125"
+}
+layer {
+  name: "caffe.SpatialConvolution_127"
+  type: "Convolution"
+  bottom: "caffe.BN_125"
+  top: "caffe.SpatialConvolution_127"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_128"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_127"
+  top: "caffe.BN_128"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_129"
+  type: "ReLU"
+  bottom: "caffe.BN_128"
+  top: "caffe.BN_128"
+}
+layer {
+  name: "caffe.SpatialConvolution_130"
+  type: "Convolution"
+  bottom: "caffe.BN_128"
+  top: "caffe.SpatialConvolution_130"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_131"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_130"
+  top: "caffe.BN_131"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_132"
+  type: "ReLU"
+  bottom: "caffe.BN_131"
+  top: "caffe.BN_131"
+}
+layer {
+  name: "caffe.SpatialConvolution_133"
+  type: "Convolution"
+  bottom: "caffe.BN_131"
+  top: "caffe.SpatialConvolution_133"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_134"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_133"
+  bottom: "caffe.BN_125"
+  top: "caffe.Eltwise_134"
+}
+layer {
+  name: "caffe.BN_135"
+  type: "BN"
+  bottom: "caffe.Eltwise_134"
+  top: "caffe.BN_135"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_136"
+  type: "ReLU"
+  bottom: "caffe.BN_135"
+  top: "caffe.BN_135"
+}
+layer {
+  name: "caffe.SpatialConvolution_137"
+  type: "Convolution"
+  bottom: "caffe.BN_135"
+  top: "caffe.SpatialConvolution_137"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_138"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_137"
+  top: "caffe.BN_138"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_139"
+  type: "ReLU"
+  bottom: "caffe.BN_138"
+  top: "caffe.BN_138"
+}
+layer {
+  name: "caffe.SpatialConvolution_140"
+  type: "Convolution"
+  bottom: "caffe.BN_138"
+  top: "caffe.SpatialConvolution_140"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 2
+    stride_w: 2
+  }
+}
+layer {
+  name: "caffe.BN_141"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_140"
+  top: "caffe.BN_141"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_142"
+  type: "ReLU"
+  bottom: "caffe.BN_141"
+  top: "caffe.BN_141"
+}
+layer {
+  name: "caffe.SpatialConvolution_143"
+  type: "Convolution"
+  bottom: "caffe.BN_141"
+  top: "caffe.SpatialConvolution_143"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 2048
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.SpatialConvolution_144"
+  type: "Convolution"
+  bottom: "caffe.BN_135"
+  top: "caffe.SpatialConvolution_144"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 2048
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 2
+    stride_w: 2
+  }
+}
+layer {
+  name: "caffe.Eltwise_145"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_143"
+  bottom: "caffe.SpatialConvolution_144"
+  top: "caffe.Eltwise_145"
+}
+layer {
+  name: "caffe.BN_146"
+  type: "BN"
+  bottom: "caffe.Eltwise_145"
+  top: "caffe.BN_146"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_147"
+  type: "ReLU"
+  bottom: "caffe.BN_146"
+  top: "caffe.BN_146"
+}
+layer {
+  name: "caffe.SpatialConvolution_148"
+  type: "Convolution"
+  bottom: "caffe.BN_146"
+  top: "caffe.SpatialConvolution_148"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_149"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_148"
+  top: "caffe.BN_149"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_150"
+  type: "ReLU"
+  bottom: "caffe.BN_149"
+  top: "caffe.BN_149"
+}
+layer {
+  name: "caffe.SpatialConvolution_151"
+  type: "Convolution"
+  bottom: "caffe.BN_149"
+  top: "caffe.SpatialConvolution_151"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_152"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_151"
+  top: "caffe.BN_152"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_153"
+  type: "ReLU"
+  bottom: "caffe.BN_152"
+  top: "caffe.BN_152"
+}
+layer {
+  name: "caffe.SpatialConvolution_154"
+  type: "Convolution"
+  bottom: "caffe.BN_152"
+  top: "caffe.SpatialConvolution_154"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 2048
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_155"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_154"
+  bottom: "caffe.BN_146"
+  top: "caffe.Eltwise_155"
+}
+layer {
+  name: "caffe.BN_156"
+  type: "BN"
+  bottom: "caffe.Eltwise_155"
+  top: "caffe.BN_156"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_157"
+  type: "ReLU"
+  bottom: "caffe.BN_156"
+  top: "caffe.BN_156"
+}
+layer {
+  name: "caffe.SpatialConvolution_158"
+  type: "Convolution"
+  bottom: "caffe.BN_156"
+  top: "caffe.SpatialConvolution_158"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_159"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_158"
+  top: "caffe.BN_159"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_160"
+  type: "ReLU"
+  bottom: "caffe.BN_159"
+  top: "caffe.BN_159"
+}
+layer {
+  name: "caffe.SpatialConvolution_161"
+  type: "Convolution"
+  bottom: "caffe.BN_159"
+  top: "caffe.SpatialConvolution_161"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 3
+    kernel_w: 3
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.BN_162"
+  type: "BN"
+  bottom: "caffe.SpatialConvolution_161"
+  top: "caffe.BN_162"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_163"
+  type: "ReLU"
+  bottom: "caffe.BN_162"
+  top: "caffe.BN_162"
+}
+layer {
+  name: "caffe.SpatialConvolution_164"
+  type: "Convolution"
+  bottom: "caffe.BN_162"
+  top: "caffe.SpatialConvolution_164"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 2048
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 1
+    kernel_w: 1
+    stride_h: 1
+    stride_w: 1
+  }
+}
+layer {
+  name: "caffe.Eltwise_165"
+  type: "Eltwise"
+  bottom: "caffe.SpatialConvolution_164"
+  bottom: "caffe.BN_156"
+  top: "caffe.Eltwise_165"
+}
+layer {
+  name: "caffe.BN_166"
+  type: "BN"
+  bottom: "caffe.Eltwise_165"
+  top: "caffe.BN_166"
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+    frozen: true
+    slope_filler {
+      value: 1
+    }
+    bias_filler {
+      value: 0
+    }
+  }
+}
+layer {
+  name: "caffe.ReLU_167"
+  type: "ReLU"
+  bottom: "caffe.BN_166"
+  top: "caffe.BN_166"
+}
+layer {
+  name: "caffe.Pooling_168"
+  type: "Pooling"
+  bottom: "caffe.BN_166"
+  top: "caffe.Pooling_168"
+  pooling_param {
+    pool: AVE
+    kernel_h: 7
+    kernel_w: 7
+    stride_h: 1
+    stride_w: 1
+    pad_h: 0
+    pad_w: 0
+  }
+}
+
+
+#================================== detection ==================================
+layer {
+  name: "det_score"
+  type: "InnerProduct"
+  bottom: "caffe.Pooling_168"
+  top: "det_score"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "pid_prob"
+  type: "Softmax"
+  bottom: "det_score"
+  top: "pid_prob"
+}
+
+
+#================================== bbox regression ==================================
+layer {
+  name: "bbox_pred"
+  type: "InnerProduct"
+  bottom: "caffe.Pooling_168"
+  top: "bbox_pred"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  inner_product_param {
+    num_output: 8
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+
+#================================== identification ==================================
+layer {
+  name: "feat_lowdim"
+  type: "InnerProduct"
+  bottom: "caffe.Pooling_168"
+  top: "feat_lowdim"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 256
+    weight_filler {
+      type: "msra"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "feat"
+  type: "Normalize"
+  bottom: "feat_lowdim"
+  top: "feat"
+}
+

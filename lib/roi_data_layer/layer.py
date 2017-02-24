@@ -84,7 +84,7 @@ class RoIDataLayer(caffe.Layer):
         """Setup the RoIDataLayer."""
 
         # parse the layer parameter string, which must be valid YAML
-        layer_params = yaml.load(self.param_str_)
+        layer_params = yaml.load(self.param_str)
 
         self._num_classes = layer_params['num_classes']
 
@@ -152,6 +152,8 @@ class RoIDataLayer(caffe.Layer):
 
     def backward(self, top, propagate_down, bottom):
         """This layer does not propagate gradients."""
+        for i in xrange(len(bottom)):
+            bottom[i].diff.fill(0)
         pass
 
     def reshape(self, bottom, top):

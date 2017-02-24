@@ -23,7 +23,7 @@ class ProposalLayer(caffe.Layer):
 
     def setup(self, bottom, top):
         # parse the layer parameter string, which must be valid YAML
-        layer_params = yaml.load(self.param_str_)
+        layer_params = yaml.load(self.param_str)
 
         self._feat_stride = layer_params['feat_stride']
         anchor_scales = layer_params.get('scales', (8, 16, 32))
@@ -61,7 +61,7 @@ class ProposalLayer(caffe.Layer):
         assert bottom[0].data.shape[0] == 1, \
             'Only single item batches are supported'
 
-        cfg_key = str(self.phase) # either 'TRAIN' or 'TEST'
+        cfg_key = str(self.phase).upper() # either 'TRAIN' or 'TEST'
         pre_nms_topN  = cfg[cfg_key].RPN_PRE_NMS_TOP_N
         post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N
         nms_thresh    = cfg[cfg_key].RPN_NMS_THRESH
@@ -110,6 +110,12 @@ class ProposalLayer(caffe.Layer):
         # reshape to (1 * H * W * A, 4) where rows are ordered by (h, w, a)
         # in slowest to fastest order
         bbox_deltas = bbox_deltas.transpose((0, 2, 3, 1)).reshape((-1, 4))
+
+        # Safe-guard for unexpected large dw or dh value
+        # Since our proposals are only human, some background region features
+        # will never receive gradients from bbox regression. Thus their
+        # predictions may drift away.
+        bbox_deltas[:, 2:] = np.maximum(np.minimum(bbox_deltas[:, 2:], 10), -10)
 
         # Same story for the scores:
         #
@@ -162,6 +168,8 @@ class ProposalLayer(caffe.Layer):
 
     def backward(self, top, propagate_down, bottom):
         """This layer does not propagate gradients."""
+        for i in xrange(len(bottom)):
+            bottom[i].diff.fill(0)
         pass
 
     def reshape(self, bottom, top):

@@ -12,7 +12,7 @@ set -e
 export PYTHONUNBUFFERED="True"
 
 GPU_ID=$1
-NET=VGG16
+NET=resnet50
 DATASET=psdb
 
 array=( $@ )
@@ -25,7 +25,7 @@ case $DATASET in
     TRAIN_IMDB="psdb_train"
     TEST_IMDB="psdb_test"
     PT_DIR="psdb"
-    ITERS=100000
+    ITERS=50000
     ;;
   *)
     echo "No dataset given"
@@ -37,22 +37,15 @@ LOG="experiments/logs/${DATASET}_train_${NET}_${EXTRA_ARGS_SLUG}.txt.`date +'%Y-
 exec &> >(tee -a "$LOG")
 echo Logging output to "$LOG"
 
-time python2 tools/train_net.py --gpu ${GPU_ID} \
+python2 tools/train_net.py --gpu ${GPU_ID} \
   --solver models/${PT_DIR}/${NET}/solver.prototxt \
-  --weights output/${DATASET}_pretrain/${NET}_iter_50000.caffemodel \
+  --weights data/imagenet_models/${NET}.caffemodel \
   --imdb ${TRAIN_IMDB} \
   --iters ${ITERS} \
-  --cfg experiments/cfgs/train.yml \
+  --cfg experiments/cfgs/${NET}.yml \
+  --rand \
   ${EXTRA_ARGS}
 
 set +x
 NET_FINAL=`grep -B 1 "done solving" ${LOG} | grep "Wrote snapshot" | awk '{print $4}'`
 set -x
-
-time python2 tools/test_net.py --gpu ${GPU_ID} \
-  --gallery_def models/${PT_DIR}/${NET}/test_gallery.prototxt \
-  --probe_def models/${PT_DIR}/${NET}/test_probe.prototxt \
-  --net ${NET_FINAL} \
-  --imdb ${TEST_IMDB} \
-  --cfg experiments/cfgs/train.yml \
-  ${EXTRA_ARGS}
