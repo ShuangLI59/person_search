@@ -1,19 +1,19 @@
 # Person Search Project
 
-This repository hosts the code for our paper [End-to-End Deep Learning for Person Search](https://arxiv.org/abs/1604.01850). The code is modified from the py-faster-rcnn written by Ross Girshick.
+This repository hosts the code for our paper [Joint Detection and Identification Feature Learning for Person Search](https://arxiv.org/abs/1604.01850). The code is modified from the py-faster-rcnn written by Ross Girshick.
 
 
 ## Installation
 
-1. Clone this repo **recursively** and switch to the `oim` branch
+1. Clone this repo **recursively**
 
   ```Shell
-  git clone --recursive https://github.com/ShuangLI59/person_search.git -b oim
+  git clone --recursive https://github.com/ShuangLI59/person_search.git
   ```
 
 2. Build Caffe with python layers and interface
 
-  We modified caffe based on [Yuanjun's fork](https://github.com/yjxiong/caffe/tree/mem), which provides multi-gpu parallelism and memory optimization.
+  We modified caffe based on [Yuanjun's fork](https://github.com/yjxiong/caffe/tree/mem), which supports multi-gpu and memory optimization.
 
   Apart from the official installation [prerequisites](http://caffe.berkeleyvision.org/installation.html), we have several other dependencies:
 
@@ -47,7 +47,7 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
   experiments/scripts/prepare_data.sh /path/to/the/downloaded/dataset.zip
   ```
 
-2. Download an ImageNet [pretrained **ResNet-50 model**](https://drive.google.com/open?id=0B67_d0rLRTQYUHFjU0pPSExhS1U) to `data/imagenet_models`.
+2. Download an [ImageNet pretrained](https://drive.google.com/open?id=0B67_d0rLRTQYUHFjU0pPSExhS1U) ResNet-50 model to `data/imagenet_models`.
 
 3. Training with GPU=0
 
@@ -79,11 +79,17 @@ This repository hosts the code for our paper [End-to-End Deep Learning for Perso
 
     The evaluation will also produce a json file `output/psdb_test/resnet50/resnet50_iter_50000/results.json` for visualization. Just copy it to `vis/` and run `python2 -m SimpleHTTPServer`. Then open a browser and go to [http://localhost:8000/vis](http://localhost:8000/vis).
 
+    ![Visualization Webpage](vis.jpg "Visualization Webpage")
+
 ## Citation
 
-    @article{xiaoli2016end,
-      title={End-to-End Deep Learning for Person Search},
+    @article{xiaoli2017joint,
+      title={Joint Detection and Identification Feature Learning for Person Search},
       author={Xiao, Tong and Li, Shuang and Wang, Bochao and Lin, Liang and Wang, Xiaogang},
       journal={arXiv:1604.01850},
-      year={2016}
+      year={2017}
     }
+
+## Repo History
+
+The first version of our paper was published in 2016. We have made substantial improvements since then and published a new version of paper in 2017. The original code was moved to branch `v1` and the new code has been merged to `master`. If you have checked out our code before, please be careful on this and we recommend clone recursively into a new repo instead.
