@@ -83,10 +83,10 @@ This repository hosts the code for our paper [Joint Detection and Identification
 
 ## Citation
 
-    @article{xiaoli2017joint,
+    @inproceedings{xiaoli2017joint,
       title={Joint Detection and Identification Feature Learning for Person Search},
       author={Xiao, Tong and Li, Shuang and Wang, Bochao and Lin, Liang and Wang, Xiaogang},
-      journal={arXiv:1604.01850},
+      booktitle={CVPR},
       year={2017}
     }
 
