@@ -35,7 +35,7 @@ def main(args):
         caffe.set_mode_cpu()
 
     # Get query image and roi
-    query_img = 'demo/query.png'
+    query_img = 'demo/query.jpg'
     query_roi = [0, 0, 466, 943]  # [x1, y1, x2, y2]
 
     # Extract feature of the query person
@@ -44,7 +44,7 @@ def main(args):
     del net  # Necessary to release cuDNN conv static workspace
 
     # Get gallery images
-    gallery_imgs = sorted(glob('demo/gallery*.png'))
+    gallery_imgs = sorted(glob('demo/gallery*.jpg'))
 
     # Detect and extract feature of persons in each gallery image
     net = caffe.Net(args.gallery_def, args.caffemodel, caffe.TEST)
@@ -102,7 +102,7 @@ if __name__ == '__main__':
                         default='output/psdb_train/resnet50/resnet50_iter_50000.caffemodel')
     parser.add_argument('--det_thresh',
                         help="detection score threshold to be evaluated",
-                        type=float, default=0.8)
+                        type=float, default=0.75)
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
                         default='experiments/cfgs/resnet50.yml')
