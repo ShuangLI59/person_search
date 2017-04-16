@@ -76,3 +76,24 @@ def exfeat(net, probes,
             _t['im_exfeat'].average_time)
 
     return all_features
+
+
+def demo_exfeat(net, filename, roi, blob_name='feat'):
+    """Extract feature for a probe person ROI in an image
+
+    Arguments:
+        net (caffe.Net): trained network
+        filename (str): path to a probe image file (jpg or png)
+        roi (list or ndarray): target roi in format [x1, y1, x2, y2, score]
+        blob_name (str): feature blob name. Default 'feat'
+
+    Returns:
+        feature (ndarray): D-dimensional vector
+    """
+    im = cv2.imread(filename)
+    roi = np.asarray(roi).astype(np.float32).reshape(1, 4)
+
+    feature = _im_exfeat(net, im, roi, [blob_name])
+    feature = feature[blob_name].squeeze()
+
+    return feature

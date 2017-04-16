@@ -193,3 +193,36 @@ def usegt_and_exfeat(net, imdb,
             _t['gt_exfeat'].average_time)
 
     return all_boxes, all_features
+
+
+def demo_detect(net, filename, blob_name='feat', threshold=0.5):
+    """Detect persons in a gallery image and extract their features
+
+    Arguments:
+        net (caffe.Net): trained network
+        filename (str): path to a gallery image file (jpg or png)
+        blob_name (str): feature blob name. Default 'feat'
+        threshold (float): detection score threshold. Default 0.5
+
+    Returns:
+        boxes (ndarray): N x 5 detected boxes in format [x1, y1, x2, y2, score]
+        features (ndarray): N x D features matrix
+    """
+    im = cv2.imread(filename)
+    boxes, scores, feat_dic = _im_detect(net, im, None, [blob_name])
+
+    j = 1  # only consider j = 1 (foreground class)
+    inds = np.where(scores[:, j] > threshold)[0]
+    cls_scores = scores[inds, j]
+    cls_boxes = boxes[inds, j*4:(j+1)*4]
+    boxes = np.hstack((cls_boxes, cls_scores[:, np.newaxis])).astype(np.float32)
+    keep = nms(boxes, cfg.TEST.NMS)
+
+    boxes = boxes[keep]
+    features = feat_dic[blob_name][inds][keep]
+
+    if boxes.shape[0] == 0:
+        return None, None
+
+    features = features.reshape(features.shape[0], -1)
+    return boxes, features
