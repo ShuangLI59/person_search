@@ -77,9 +77,9 @@ def main(args):
             ax.add_patch(
                 plt.Rectangle((x1, y1), x2 - x1, y2 - y1,
                               fill=False, edgecolor='white', linewidth=1))
-            ax.text(x1 + 5, y1 - 14, '{:.2f}'.format(sim),
+            ax.text(x1 + 5, y1 - 18, '{:.2f}'.format(sim),
                     bbox=dict(facecolor='#4CAF50', linewidth=0),
-                    fontsize=12, color='white')
+                    fontsize=20, color='white')
         plt.tight_layout()
         fig.savefig(gallery_img.replace('gallery', 'result'))
         plt.show()

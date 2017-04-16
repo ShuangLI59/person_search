@@ -39,6 +39,19 @@ This repository hosts the code for our paper [Joint Detection and Identification
   cd lib && make && cd ..
   ```
 
+## Demo
+
+Download our [**trained model**](https://drive.google.com/open?id=0B67_d0rLRTQYbVFENlVjdXRSWVE) to `output/psdb_train/resnet50/`, then
+
+```Shell
+python2 tools/demo.py --gpu 0
+```
+
+Or you can use CPU only by setting ``--gpu -1``.
+
+![Demo](demo.jpg "Demo")
+
+
 ## Experiments
 
 1. Request the dataset from sli [at] ee.cuhk.edu.hk or xiaotong [at] ee.cuhk.edu.hk (academic only). Then
