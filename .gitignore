@@ -64,3 +64,5 @@
 
 *.caffemodel
 *.solverstate
+
+demo/*result*.jpg
