@@ -81,6 +81,7 @@ def main(args):
                     bbox=dict(facecolor='#4CAF50', linewidth=0),
                     fontsize=12, color='white')
         plt.tight_layout()
+        fig.savefig(gallery_img.replace('gallery', 'result'))
         plt.show()
         plt.close(fig)
     del net
