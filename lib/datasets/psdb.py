@@ -77,8 +77,8 @@ class psdb(imdb):
                     return
             print 'Warning: person {} box {} cannot find in Images'.format(pid, box)
 
-        # Load all the train / test persons and number their pids from 1 to N-1
-        # Background people have pid == 0
+        # Load all the train / test persons and label their pids from 0 to N-1
+        # Assign pid = -1 for unlabeled background people
         if self._image_set == 'train':
             train = loadmat(osp.join(self._root_dir,
                                      'annotation/test/train_test/Train.mat'))
