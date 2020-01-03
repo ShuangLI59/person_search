@@ -55,7 +55,7 @@ Or you can use CPU only by setting ``--gpu -1``.
 
 ## Experiments
 
-1. Request the dataset from sli [at] ee.cuhk.edu.hk or xiaotong [at] ee.cuhk.edu.hk (academic only). Then
+1. Request the dataset from sli [at] mit.edu or tong.xiao.work[at]gmail.com (academic only). Then
 
   ```Shell
   experiments/scripts/prepare_data.sh /path/to/the/downloaded/dataset.zip
