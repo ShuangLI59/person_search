@@ -2,9 +2,6 @@
 
 This repository hosts the code for our paper [Joint Detection and Identification Feature Learning for Person Search](https://arxiv.org/abs/1604.01850). The code is modified from the py-faster-rcnn written by Ross Girshick.
 
-**Request the dataset from lishuang[at]mit.edu or tong.xiao.work[at]gmail.com (academic only).** </br>
-  Due to licensing issues, please send us your request using your university email. 
-
 ## Installation
 
 1. Clone this repo **recursively**
